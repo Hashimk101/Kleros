@@ -1,0 +1,172 @@
+"""
+LLM Extractor module using Google Gemini 2.0 Flash with OpenRouter fallback for offer extraction.
+"""
+
+import json
+import logging
+import os
+import re
+import time
+from typing import Any, Dict, List, Optional
+import httpx
+from dotenv import load_dotenv
+from google import genai
+
+load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+SYSTEM_PROMPT = """You are an expert AI agent that finds free student AI resources. Extract structured offer data from the provided search result content.
+
+Extract any offers matching these types:
+- api: LLM API credits (OpenRouter, Gemini, Claude, Groq, etc.)
+- ide: IDE credits/subscriptions (Zed, Antigravity, Cursor, GitHub Copilot, etc.)
+- chat: Chat subscriptions (Gemini Student, ChatGPT Edu, Claude Pro, etc.)
+- student: General student-specific AI programs & discounts
+
+Return a JSON array of objects. Each object MUST include:
+- name: (string) The offer or deal name
+- url: (string) Target URL for the offer
+- offer_type: (string) Exactly one of "api", "ide", "chat", "student"
+- value: (string) Free credits or value description (e.g., "$100 free credits", "Free for 1 year")
+- geo_restricted: (boolean) true if restricted to specific countries/regions, false if globally available
+- eligible_regions: (array of strings) e.g., ["global"] or ["us", "europe", "asia"]
+- date_posted: (string or null) "YYYY-MM-DD" format if mentioned, otherwise null
+- source_type: (string) "official", "blog", "forum", or "social"
+- description: (string) Brief summary of how to claim the offer
+
+CRITICAL: Return ONLY a valid JSON array. Do not include markdown code block backticks or extra text outside the JSON.
+"""
+
+
+class LLMExtractor:
+    """Extracts structured offers from web markdown using Gemini 2.0 Flash or OpenRouter."""
+
+    def __init__(
+        self,
+        gemini_key: Optional[str] = None,
+        openrouter_key: Optional[str] = None,
+        llm_delay: float = 2.0
+    ):
+        self.gemini_key = gemini_key or os.getenv("GEMINI_API_KEY")
+        self.openrouter_key = openrouter_key or os.getenv("OPENROUTER_API_KEY")
+        self.llm_delay = llm_delay
+
+        self.gemini_client = None
+        if self.gemini_key:
+            try:
+                self.gemini_client = genai.Client(api_key=self.gemini_key)
+            except Exception as e:
+                logger.warning(f"Could not initialize Gemini client: {e}")
+
+    def _clean_json_text(self, text: str) -> str:
+        """Strip markdown triple backticks and trim text."""
+        text = text.strip()
+        text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"\s*```$", "", text)
+        return text.strip()
+
+    def extract_with_gemini(self, page_content: str, url: str) -> Optional[List[Dict[str, Any]]]:
+        """Extract offers using Google Gemini 2.0 Flash."""
+        if not self.gemini_client:
+            return None
+
+        prompt = f"{SYSTEM_PROMPT}\n\nTarget URL: {url}\n\nPage Content:\n{page_content[:15000]}"
+        try:
+            logger.info(f"Extracting offers with Gemini 2.0 Flash for: {url}")
+            response = self.gemini_client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt
+            )
+            raw_text = response.text or ""
+            cleaned = self._clean_json_text(raw_text)
+            data = json.loads(cleaned)
+            if isinstance(data, list):
+                return data
+        except Exception as e:
+            logger.warning(f"Gemini extraction failed for {url}: {e}")
+        return None
+
+    def extract_with_openrouter(self, page_content: str, url: str) -> Optional[List[Dict[str, Any]]]:
+        """Fallback extraction using OpenRouter free models API."""
+        if not self.openrouter_key:
+            return None
+
+        prompt = f"{SYSTEM_PROMPT}\n\nTarget URL: {url}\n\nPage Content:\n{page_content[:15000]}"
+        headers = {
+            "Authorization": f"Bearer {self.openrouter_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "google/gemini-2.0-flash-lite-001",
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"Target URL: {url}\n\nPage Content:\n{page_content[:15000]}"}
+            ],
+            "temperature": 0.2
+        }
+
+        try:
+            logger.info(f"Extracting offers with OpenRouter fallback for: {url}")
+            response = httpx.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                json=payload,
+                headers=headers,
+                timeout=20.0
+            )
+            if response.status_code == 200:
+                res_data = response.json()
+                content = res_data["choices"][0]["message"]["content"]
+                cleaned = self._clean_json_text(content)
+                data = json.loads(cleaned)
+                if isinstance(data, list):
+                    return data
+        except Exception as e:
+            logger.warning(f"OpenRouter extraction failed for {url}: {e}")
+        return None
+
+    def extract_offers_from_page(self, page_content: str, url: str) -> List[Dict[str, Any]]:
+        """
+        Attempt extraction via Gemini primary first, fallback to OpenRouter.
+        """
+        if not page_content or not page_content.strip():
+            return []
+
+        # 1. Try Gemini
+        offers = self.extract_with_gemini(page_content, url)
+        if offers is not None:
+            return offers
+
+        # 2. Fallback to OpenRouter
+        logger.info(f"Primary LLM failed/unavailable for {url}. Trying OpenRouter fallback...")
+        offers = self.extract_with_openrouter(page_content, url)
+        if offers is not None:
+            return offers
+
+        return []
+
+    def extract_all(self, fetched_pages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Process multiple fetched pages sequentially with rate-limit delays."""
+        all_extracted_offers: List[Dict[str, Any]] = []
+
+        for page in fetched_pages:
+            url = page.get("url", "")
+            content = page.get("markdown_content", "")
+            if not content:
+                continue
+
+            offers = self.extract_offers_from_page(content, url)
+            for offer in offers:
+                if isinstance(offer, dict):
+                    # Ensure url field is set if missing
+                    if "url" not in offer or not offer["url"]:
+                        offer["url"] = url
+                    if "source_url" not in offer:
+                        offer["source_url"] = url
+                    all_extracted_offers.append(offer)
+
+            time.sleep(self.llm_delay)
+
+        logger.info(f"LLM Extractor discovered {len(all_extracted_offers)} raw offers.")
+        return all_extracted_offers
