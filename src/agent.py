@@ -93,8 +93,14 @@ class KlerosAgent:
             notify("Complete", "No search results discovered.", 1.0)
             return result_payload
 
+        # Filter out outdated or expired links BEFORE fetching to save LLM time & quota
+        fresh_results = self.filter_engine.filter_search_results_before_fetch(search_results)
+        if not fresh_results:
+            notify("Complete", "All discovered links were identified as outdated or expired.", 1.0)
+            return result_payload
+
         # Select top N pages to fetch
-        pages_to_fetch = search_results[:max_pages]
+        pages_to_fetch = fresh_results[:max_pages]
 
         # Step 2: FETCH
         notify("Fetch", f"Fetching clean Markdown for top {len(pages_to_fetch)} URLs via Jina Reader...", 0.35)
@@ -107,10 +113,16 @@ class KlerosAgent:
             return result_payload
 
         # Step 3: EXTRACT
-        notify("Extract", "Extracting structured JSON offers using LLM (Gemini 2.0 Flash)...", 0.65)
-        raw_offers = self.llm_extractor.extract_all(fetched_pages)
+        notify("Extract", "Extracting structured JSON offers using LLMs...", 0.60)
+        
+        # We define a custom callback for the extractor to report per-page progress
+        def extract_progress(current: int, total: int, url: str):
+            pct = 0.60 + (0.20 * (current / max(1, total)))
+            notify("Extract", f"Extracting page {current}/{total}: {url}", pct)
+            
+        raw_offers = self.llm_extractor.extract_all(fetched_pages, progress_callback=extract_progress)
         result_payload["raw_offers_count"] = len(raw_offers)
-        notify("Extract", f"Extracted {len(raw_offers)} raw offer objects.", 0.75)
+        notify("Extract", f"Extracted {len(raw_offers)} raw offer objects.", 0.80)
 
         # Step 4: FILTER
         notify("Filter", "Validating schema, recency, geo-restrictions, and deduplicating...", 0.85)

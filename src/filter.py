@@ -94,6 +94,39 @@ class FilterEngine:
 
         return processed
 
+    def filter_search_results_before_fetch(self, search_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Filter out search results that are explicitly outdated or marked expired
+        BEFORE fetching and sending to the LLM.
+        """
+        fresh_results: List[Dict[str, Any]] = []
+        outdated_years = {"2020", "2021", "2022", "2023", "2024"}
+        current_year = datetime.now().year
+
+        for item in search_results:
+            title = (item.get("title") or "").lower()
+            snippet = (item.get("snippet") or "").lower()
+            url = (item.get("url") or "").lower()
+            text_combined = f"{title} {snippet} {url}"
+
+            # Skip if explicitly mentions expired deal status
+            if any(term in text_combined for term in ["expired", "deal ended", "offer ended", "discontinued", "no longer available"]):
+                logger.info(f"Pre-fetch filter rejected expired URL: {item.get('url')}")
+                continue
+
+            # Skip if it references old years (e.g. 2022, 2023) and does NOT mention current year
+            has_old_year = any(yr in text_combined for yr in outdated_years)
+            has_current_year = str(current_year) in text_combined or str(current_year - 1) in text_combined
+
+            if has_old_year and not has_current_year:
+                logger.info(f"Pre-fetch filter rejected outdated year URL: {item.get('url')}")
+                continue
+
+            fresh_results.append(item)
+
+        logger.info(f"Pre-fetch filter retained {len(fresh_results)}/{len(search_results)} fresh search results.")
+        return fresh_results
+
     def filter_offers(self, raw_offers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Filter and normalize raw extracted offers:
