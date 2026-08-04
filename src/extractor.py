@@ -62,12 +62,13 @@ class LLMExtractor:
         gemini_key: Optional[str] = None,
         openrouter_key: Optional[str] = None,
         llm_delay: float = 2.0,
-        max_retries: int = 2
+        max_retries: int = 1
     ):
         self.gemini_key = gemini_key or os.getenv("GEMINI_API_KEY")
         self.openrouter_key = openrouter_key or os.getenv("OPENROUTER_API_KEY")
         self.llm_delay = llm_delay
         self.max_retries = max_retries
+        self._gemini_quota_exhausted = False
 
         self.gemini_client = None
         if self.gemini_key:
@@ -84,35 +85,36 @@ class LLMExtractor:
         return text.strip()
 
     def extract_with_gemini(self, page_content: str, url: str) -> Optional[List[Dict[str, Any]]]:
-        """Extract offers using Gemini with retry on rate limits."""
-        if not self.gemini_client:
+        """Extract offers using Gemini. Skips immediately if daily quota exhausted."""
+        if not self.gemini_client or self._gemini_quota_exhausted:
             return None
 
         prompt = f"{SYSTEM_PROMPT}\n\nTarget URL: {url}\n\nPage Content:\n{page_content[:12000]}"
 
         for model_name in GEMINI_MODELS:
-            for attempt in range(self.max_retries):
-                try:
-                    logger.info(f"Extracting with {model_name} for: {url} (attempt {attempt + 1})")
-                    response = self.gemini_client.models.generate_content(
-                        model=model_name,
-                        contents=prompt
-                    )
-                    raw_text = response.text or ""
-                    cleaned = self._clean_json_text(raw_text)
-                    data = json.loads(cleaned)
-                    if isinstance(data, list):
-                        return data
-                except Exception as e:
-                    error_str = str(e)
-                    if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
-                        wait_time = 15 * (attempt + 1)
-                        logger.warning(f"{model_name} rate limited. Waiting {wait_time}s before retry...")
-                        time.sleep(wait_time)
-                        continue
-                    else:
-                        logger.warning(f"{model_name} extraction failed for {url}: {e}")
-                        break  # Non-rate-limit error, try next model
+            try:
+                logger.info(f"Extracting with {model_name} for: {url}")
+                response = self.gemini_client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                raw_text = response.text or ""
+                cleaned = self._clean_json_text(raw_text)
+                data = json.loads(cleaned)
+                if isinstance(data, list):
+                    return data
+            except Exception as e:
+                error_str = str(e)
+                if "limit: 0" in error_str or "PerDayPerProject" in error_str:
+                    logger.warning(f"{model_name} daily quota exhausted. Skipping Gemini for all remaining pages.")
+                    self._gemini_quota_exhausted = True
+                    return None
+                elif "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+                    logger.warning(f"{model_name} rate limited. Trying next model...")
+                    continue
+                else:
+                    logger.warning(f"{model_name} extraction failed for {url}: {e}")
+                    break
         return None
 
     def extract_with_openrouter(self, page_content: str, url: str) -> Optional[List[Dict[str, Any]]]:
