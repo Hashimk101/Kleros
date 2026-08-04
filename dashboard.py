@@ -52,18 +52,19 @@ st.markdown("""
         justify-content: space-between;
         align-items: center;
         padding-bottom: 1.5rem;
-        border-bottom: 1px solid #1f2228;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         margin-bottom: 2rem;
     }
     .brand-title {
-        font-size: 1.5rem;
+        font-family: 'Playfair Display', serif;
+        font-size: 1.75rem;
         font-weight: 700;
-        letter-spacing: -0.03em;
-        color: #ffffff;
+        letter-spacing: -0.04em;
+        color: #fafafa;
         margin: 0;
     }
     .brand-subtitle {
-        color: #8a8f98;
+        color: #8b9bb4; /* Cool Slate */
         font-size: 0.9rem;
         margin-top: 0.25rem;
     }
@@ -77,7 +78,7 @@ st.markdown("""
     }
     .metric-card {
         background: #0d0e12;
-        border: 1px solid #1f2228;
+        border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 6px;
         padding: 1rem;
         text-align: left;
@@ -86,15 +87,15 @@ st.markdown("""
         font-size: 0.75rem;
         font-weight: 600;
         letter-spacing: 0.05em;
-        color: #6f747c;
+        color: #8b9bb4; /* Cool Slate */
         text-transform: uppercase;
         margin-bottom: 0.4rem;
     }
     .metric-value {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #f3f4f6;
-        font-family: 'JetBrains Mono', monospace;
+        font-size: 2rem;
+        font-weight: 500;
+        color: #d4af37; /* Champagne Gold */
+        font-family: 'Playfair Display', serif;
     }
 
     /* Premium Streamlit Button Override */
@@ -127,7 +128,7 @@ st.markdown("""
     /* Selectbox & Input Clean Override */
     div[data-baseweb="select"] > div {
         background-color: #0d0e12 !important;
-        border: 1px solid #1f2228 !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
         border-radius: 6px !important;
         color: #f3f4f6 !important;
     }
@@ -142,7 +143,7 @@ st.markdown("""
     /* Deal Card Grid */
     .deal-card {
         background: #0d0e12;
-        border: 1px solid #1f2228;
+        border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 6px;
         padding: 1.25rem;
         margin-bottom: 1rem;
@@ -153,6 +154,7 @@ st.markdown("""
     }
     .tag-mono {
         font-family: 'JetBrains Mono', monospace;
+        font-variant-numeric: tabular-nums;
         font-size: 0.72rem;
         font-weight: 500;
         padding: 0.2rem 0.5rem;
@@ -169,24 +171,27 @@ st.markdown("""
     .tag-us { background: #451212; color: #f87171; border: 1px solid #7f1d1d; }
 
     .deal-title {
-        font-size: 1.1rem;
+        font-family: 'Inter', sans-serif;
+        font-size: 1.05rem;
         font-weight: 600;
-        color: #f9fafb;
+        color: #f3f4f6;
         margin-top: 0.6rem;
         margin-bottom: 0.3rem;
-        letter-spacing: -0.01em;
+        letter-spacing: -0.02em;
     }
     .deal-value {
         font-family: 'JetBrains Mono', monospace;
-        color: #10b981;
+        font-variant-numeric: tabular-nums;
+        color: #d4af37; /* Champagne Gold */
         font-size: 0.88rem;
         font-weight: 500;
         margin-bottom: 0.5rem;
     }
     .deal-desc {
-        color: #8a8f98;
-        font-size: 0.85rem;
-        line-height: 1.45;
+        font-family: 'Inter', sans-serif;
+        color: #8b9bb4; /* Cool Slate */
+        font-size: 0.8125rem;
+        line-height: 1.6;
         margin-bottom: 1rem;
     }
     .claim-link {
@@ -194,7 +199,7 @@ st.markdown("""
         align-items: center;
         color: #f3f4f6 !important;
         background: #161922;
-        border: 1px solid #272c38;
+        border: 1px solid rgba(255, 255, 255, 0.06);
         padding: 0.4rem 0.85rem;
         border-radius: 4px;
         font-size: 0.8rem;
@@ -204,18 +209,21 @@ st.markdown("""
     }
     .claim-link:hover {
         background: #212636;
-        border-color: #3b4254;
+        border-color: rgba(255, 255, 255, 0.15);
     }
 
     /* Terminal Feed Box */
     .terminal-box {
-        background: #050607;
-        border: 1px solid #1f2228;
+        background: #0a0a0b;
+        border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 6px;
         padding: 1rem;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.82rem;
-        color: #10b981;
+        font-variant-numeric: tabular-nums;
+        font-size: 0.78rem;
+        color: #d4af37; /* Champagne Gold */
+        text-shadow: 0 0 10px rgba(212,175,55,0.3);
+        box-shadow: 0 0 20px rgba(212,175,55,0.05); /* Faint amber glow */
         margin-bottom: 1.5rem;
     }
 </style>
