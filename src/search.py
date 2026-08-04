@@ -8,7 +8,7 @@ import logging
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 import httpx
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -41,7 +41,6 @@ class SearchRouter:
             return ""
         url = url.strip()
         parsed = urlparse(url)
-        # Normalize protocol and lowercase hostname
         scheme = parsed.scheme.lower() if parsed.scheme else "https"
         netloc = parsed.netloc.lower()
         path = parsed.path.rstrip("/")
@@ -51,22 +50,22 @@ class SearchRouter:
         return normalized
 
     def search_duckduckgo(self, query: str, max_results: int = 10) -> List[Dict[str, Any]]:
-        """Search DuckDuckGo using duckduckgo-search package."""
+        """Search DuckDuckGo using the ddgs package."""
         results: List[Dict[str, Any]] = []
         try:
             logger.info(f"Searching DuckDuckGo for: '{query}'")
-            with DDGS() as ddgs:
-                ddg_results = list(ddgs.text(query, max_results=max_results))
-                for item in ddg_results:
-                    href = item.get("href")
-                    if href:
-                        results.append({
-                            "url": self._normalize_url(href),
-                            "title": item.get("title", ""),
-                            "snippet": item.get("body", ""),
-                            "source": "duckduckgo",
-                            "date": item.get("date")
-                        })
+            ddgs = DDGS()
+            ddg_results = list(ddgs.text(query, max_results=max_results))
+            for item in ddg_results:
+                href = item.get("href")
+                if href:
+                    results.append({
+                        "url": self._normalize_url(href),
+                        "title": item.get("title", ""),
+                        "snippet": item.get("body", ""),
+                        "source": "duckduckgo",
+                        "date": item.get("date")
+                    })
         except Exception as e:
             logger.warning(f"DuckDuckGo search error: {e}")
         return results
@@ -75,7 +74,7 @@ class SearchRouter:
         """Search SearXNG public instances as fallback."""
         results: List[Dict[str, Any]] = []
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }
 
         for instance in self.searx_instances:
@@ -105,6 +104,8 @@ class SearchRouter:
                     if results:
                         logger.info(f"SearXNG instance {base_url} returned {len(results)} results.")
                         break
+                else:
+                    logger.warning(f"SearXNG instance {base_url} returned status {response.status_code}")
             except Exception as e:
                 logger.warning(f"SearXNG instance {base_url} failed: {e}")
                 continue
