@@ -39,18 +39,12 @@ Return a JSON array of objects. Each object MUST include:
 CRITICAL: Return ONLY a valid JSON array. Do not include markdown code block backticks or extra text outside the JSON.
 """
 
-# OpenRouter free models to try in order of preference
+# OpenRouter free models to try in order of preference (prioritizing fast & reliable free models)
 OPENROUTER_FREE_MODELS = [
-    "google/gemma-4-31b-it:free",
     "google/gemma-4-26b-a4b-it:free",
-    "openai/gpt-oss-20b:free",
     "inclusionai/ling-3.0-flash:free",
-]
-
-# Gemini models to try in order
-GEMINI_MODELS = [
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
+    "google/gemma-4-31b-it:free",
+    "openai/gpt-oss-20b:free",
 ]
 
 
@@ -61,14 +55,12 @@ class LLMExtractor:
         self,
         gemini_key: Optional[str] = None,
         openrouter_key: Optional[str] = None,
-        llm_delay: float = 2.0,
-        max_retries: int = 1
+        llm_delay: float = 0.5
     ):
         self.gemini_key = gemini_key or os.getenv("GEMINI_API_KEY")
         self.openrouter_key = openrouter_key or os.getenv("OPENROUTER_API_KEY")
         self.llm_delay = llm_delay
-        self.max_retries = max_retries
-        self._gemini_quota_exhausted = False
+        self._gemini_disabled = False
 
         self.gemini_client = None
         if self.gemini_key:
@@ -85,36 +77,26 @@ class LLMExtractor:
         return text.strip()
 
     def extract_with_gemini(self, page_content: str, url: str) -> Optional[List[Dict[str, Any]]]:
-        """Extract offers using Gemini. Skips immediately if daily quota exhausted."""
-        if not self.gemini_client or self._gemini_quota_exhausted:
+        """Attempt Gemini ONCE. If it fails for ANY reason, immediately disable Gemini for all subsequent calls."""
+        if not self.gemini_client or self._gemini_disabled:
             return None
 
         prompt = f"{SYSTEM_PROMPT}\n\nTarget URL: {url}\n\nPage Content:\n{page_content[:12000]}"
 
-        for model_name in GEMINI_MODELS:
-            try:
-                logger.info(f"Extracting with {model_name} for: {url}")
-                response = self.gemini_client.models.generate_content(
-                    model=model_name,
-                    contents=prompt
-                )
-                raw_text = response.text or ""
-                cleaned = self._clean_json_text(raw_text)
-                data = json.loads(cleaned)
-                if isinstance(data, list):
-                    return data
-            except Exception as e:
-                error_str = str(e)
-                if "limit: 0" in error_str or "PerDayPerProject" in error_str:
-                    logger.warning(f"{model_name} daily quota exhausted. Skipping Gemini for all remaining pages.")
-                    self._gemini_quota_exhausted = True
-                    return None
-                elif "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
-                    logger.warning(f"{model_name} rate limited. Trying next model...")
-                    continue
-                else:
-                    logger.warning(f"{model_name} extraction failed for {url}: {e}")
-                    break
+        try:
+            logger.info(f"Extracting with Gemini 2.0 Flash (single attempt) for: {url}")
+            response = self.gemini_client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt
+            )
+            raw_text = response.text or ""
+            cleaned = self._clean_json_text(raw_text)
+            data = json.loads(cleaned)
+            if isinstance(data, list):
+                return data
+        except Exception as e:
+            logger.warning(f"Gemini attempt failed ({e}). Disabling Gemini for remaining requests; falling back to OpenRouter free models.")
+            self._gemini_disabled = True
         return None
 
     def extract_with_openrouter(self, page_content: str, url: str) -> Optional[List[Dict[str, Any]]]:
@@ -143,7 +125,7 @@ class LLMExtractor:
                     "https://openrouter.ai/api/v1/chat/completions",
                     json=payload,
                     headers=headers,
-                    timeout=30.0
+                    timeout=15.0
                 )
                 if response.status_code == 200:
                     res_data = response.json()
@@ -154,7 +136,7 @@ class LLMExtractor:
                         logger.info(f"OpenRouter {model_id} extracted {len(data)} offers.")
                         return data
                 else:
-                    logger.warning(f"OpenRouter {model_id} returned {response.status_code}")
+                    logger.warning(f"OpenRouter {model_id} returned HTTP {response.status_code}")
                     continue
             except Exception as e:
                 logger.warning(f"OpenRouter {model_id} failed for {url}: {e}")
@@ -163,17 +145,17 @@ class LLMExtractor:
         return None
 
     def extract_offers_from_page(self, page_content: str, url: str) -> List[Dict[str, Any]]:
-        """Attempt extraction via Gemini first, fallback to OpenRouter."""
+        """Attempt extraction via Gemini first (single try), fallback to OpenRouter free models."""
         if not page_content or not page_content.strip():
             return []
 
-        # 1. Try Gemini
+        # 1. Try Gemini (if not disabled)
         offers = self.extract_with_gemini(page_content, url)
         if offers is not None:
             return offers
 
         # 2. Fallback to OpenRouter
-        logger.info(f"Gemini unavailable for {url}. Trying OpenRouter fallback...")
+        logger.info(f"Using OpenRouter fallback for: {url}")
         offers = self.extract_with_openrouter(page_content, url)
         if offers is not None:
             return offers
@@ -181,7 +163,7 @@ class LLMExtractor:
         return []
 
     def extract_all(self, fetched_pages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Process multiple fetched pages sequentially with rate-limit delays."""
+        """Process multiple fetched pages sequentially with minimal delay."""
         all_extracted_offers: List[Dict[str, Any]] = []
 
         for page in fetched_pages:
