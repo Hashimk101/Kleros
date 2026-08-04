@@ -1,39 +1,39 @@
-# 🏛️ KLEROS: Autonomous Discovery Agent for Free AI Resources
+# KLEROS: Autonomous Discovery Agent for Free AI Resources
 
 **Kleros** is an autonomous, on-demand discovery agent that finds, extracts, validates, and caches free LLM APIs, IDE credits, and chat subscriptions for students and developers.
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
-- **🔍 Multi-Source Search Router**: Primary search via DuckDuckGo with SearXNG fallback rotation.
-- **📄 Clean Content Extraction**: Web page markdown rendering powered by Jina Reader API (`https://r.jina.ai/`).
-- **🧠 LLM Structured Offer Extractor**: High-reasoning offer extraction using **Google Gemini 2.0 Flash** with automatic **OpenRouter** fallback.
-- **🛡️ Smart Filtering & Validation**:
+- **Multi-Source Search Router**: Primary search via DuckDuckGo with SearXNG fallback rotation.
+- **Clean Content Extraction**: Web page markdown rendering powered by Jina Reader API (`https://r.jina.ai/`).
+- **LLM Structured Offer Extractor**: High-reasoning offer extraction using **Google Gemini 2.0 Flash** with automatic **OpenRouter** fallback.
+- **Smart Filtering & Validation**:
   - Enforces schema and required fields.
   - Geo-restriction prioritization (`global` > `europe` > `asia` > `us`) and US-only deal auto-flagging.
   - Recency window checking (90-day validity window).
   - Multi-level URL deduplication.
-- **💾 SQLite Caching Engine**: Local SQLite storage (`offers.db`) preventing duplicate processing and tracking offer history.
-- **🎨 Sleek Streamlit Dashboard**: Dark glassmorphism UI with live execution feed, metric counters, category & region filters, and CSV export.
+- **SQLite Caching Engine**: Local SQLite storage (`offers.db`) preventing duplicate processing and tracking offer history.
+- **Sleek Streamlit Dashboard**: Dark glassmorphism UI with live execution feed, metric counters, category & region filters, and CSV export.
 
 ---
 
-## 🏗️ Core Architecture Flow
+## Core Architecture Flow
 
 ```
 1. SEARCH (DDG / SearXNG) 
-   └─► 2. FETCH (Jina Reader) 
-        └─► 3. EXTRACT (Gemini 2.0 / OpenRouter) 
-             └─► 4. FILTER (Validation / Geo / Recency) 
-                  └─► 5. DISPLAY & CACHE (SQLite + Streamlit)
+   |---> 2. FETCH (Jina Reader) 
+          |---> 3. EXTRACT (Gemini 2.0 / OpenRouter) 
+                 |---> 4. FILTER (Validation / Geo / Recency) 
+                        |---> 5. DISPLAY & CACHE (SQLite + Streamlit)
 ```
 
 For complete technical specifications, see [`Kleros_Architecture.md`](file:///d:/Projects/Kleros/Kleros_Architecture.md).
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### 1. Installation
 
@@ -70,7 +70,7 @@ SEARX_3=https://search.rhscz.eu/
 
 ---
 
-## 💻 Running the Application
+## Running the Application
 
 ### Launch Streamlit Interactive Dashboard
 
@@ -80,14 +80,14 @@ streamlit run dashboard.py
 
 Open your browser at `http://localhost:8501` to use the interactive dashboard:
 1. Enter your search query or use the pre-configured prompt.
-2. Click **🚀 Run Agent** to trigger the discovery pipeline.
+2. Click **Run Agent** to trigger the discovery pipeline.
 3. Track progress live in the execution feed.
 4. Filter deals by type (`API`, `IDE`, `Chat`, `Student`) or region.
 5. Export deal reports to CSV.
 
 ---
 
-## 🧪 Running Automated Tests
+## Running Automated Tests
 
 Kleros includes a comprehensive test suite for all pipeline components:
 
@@ -97,7 +97,7 @@ python -m unittest discover tests
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 Kleros/
@@ -126,6 +126,6 @@ Kleros/
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the **GNU General Public License v3.0**. See `LICENSE` for details.
