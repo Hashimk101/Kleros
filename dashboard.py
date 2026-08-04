@@ -275,7 +275,12 @@ if trigger_discovery:
             max_pages=5,
             progress_callback=update_progress
         )
-        st.success(f"Discovery Complete. Discovered {result['valid_offers_count']} offers ({result['new_offers_count']} new saved).")
+        valid_cnt = result.get("valid_offers_count", 0)
+        new_cnt = result.get("new_offers_count", 0)
+        if valid_cnt > 0:
+            st.success(f"Discovery Complete. Discovered {valid_cnt} offers ({new_cnt} new saved).")
+        else:
+            st.info(f"Discovery Complete. Pipeline processed 0 new offers for category '{selected_type}'.")
     except Exception as e:
         st.error(f"Execution error: {e}")
 
