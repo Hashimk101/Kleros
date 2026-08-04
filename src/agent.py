@@ -73,7 +73,7 @@ class KlerosAgent:
 
         # Default result structure to prevent KeyError
         result_payload = {
-            "query": query,
+            "query": "Multiple Queries" if category.strip().lower() == "all" else query,
             "category": category,
             "raw_search_count": 0,
             "fetched_pages_count": 0,
@@ -84,8 +84,25 @@ class KlerosAgent:
         }
 
         # Step 1: SEARCH
-        notify("Search", f"Autonomous search running for query: '{query}'", 0.1)
-        search_results = self.search_router.search(query=query, max_results=max_results)
+        search_results = []
+        if category.strip().lower() == "all":
+            notify("Search", "Running dual-search for APIs and IDEs...", 0.1)
+            query_api = CATEGORY_QUERIES["api"]
+            query_ide = CATEGORY_QUERIES["ide"]
+            results_api = self.search_router.search(query=query_api, max_results=max_results)
+            results_ide = self.search_router.search(query=query_ide, max_results=max_results)
+            
+            # Combine and deduplicate
+            seen_urls = set()
+            for res in results_api + results_ide:
+                url = res.get("url")
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    search_results.append(res)
+        else:
+            notify("Search", f"Autonomous search running for query: '{query}'", 0.1)
+            search_results = self.search_router.search(query=query, max_results=max_results)
+
         result_payload["raw_search_count"] = len(search_results)
         notify("Search", f"Discovered {len(search_results)} search results.", 0.25)
 
