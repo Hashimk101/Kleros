@@ -1,131 +1,65 @@
-# KLEROS: Autonomous Discovery Agent for Free AI Resources
+# Kleros - Autonomous Discovery Agent
 
-**Kleros** is an autonomous, on-demand discovery agent that finds, extracts, validates, and caches free LLM APIs, IDE credits, and chat subscriptions for students and developers.
+Kleros is an autonomous agent pipeline designed to discover, extract, and verify free AI resources. This includes LLM API credits, IDE subscriptions, chat plans, and general student deals. It leverages search engines, direct fetching via Jina Reader, and Large Language Models (LLMs) to automatically construct a verified database of active deals.
 
----
+## Architecture
 
-## Key Features
+The system executes a 5-step pipeline:
+1. Search: Queries DuckDuckGo and SearXNG for relevant deals, automatically interleaving results for APIs and IDEs.
+2. Fetch: Uses Jina Reader and fallback direct HTTP requests to retrieve clean markdown from discovered web pages.
+3. Extract: Uses Gemini Flash (with OpenRouter free models as a fallback) to extract structured JSON data about the deals, strictly capturing the provider names and daily limits.
+4. Filter: A local Python engine filters out outdated deals and rejects paid options based on aggressive regex patterns.
+5. Store: Saves valid offers to a local SQLite database (offers.db).
 
-- **Multi-Source Search Router**: Primary search via DuckDuckGo with SearXNG fallback rotation.
-- **Clean Content Extraction**: Web page markdown rendering powered by Jina Reader API (`https://r.jina.ai/`).
-- **LLM Structured Offer Extractor**: High-reasoning offer extraction using **Google Gemini 2.0 Flash** with automatic **OpenRouter** fallback.
-- **Smart Filtering & Validation**:
-  - Enforces schema and required fields.
-  - Geo-restriction prioritization (`global` > `europe` > `asia` > `us`) and US-only deal auto-flagging.
-  - Recency window checking (90-day validity window).
-  - Multi-level URL deduplication.
-- **SQLite Caching Engine**: Local SQLite storage (`offers.db`) preventing duplicate processing and tracking offer history.
-- **Sleek Streamlit Dashboard**: Dark glassmorphism UI with live execution feed, metric counters, category & region filters, and CSV export.
+The system includes a Swiss Minimalist dashboard built with Streamlit for reviewing and exporting the discovered deals.
 
----
+## Prerequisites
 
-## Core Architecture Flow
+- Python 3.10 or higher
+- Git
 
-```
-1. SEARCH (DDG / SearXNG) 
-   |---> 2. FETCH (Jina Reader) 
-          |---> 3. EXTRACT (Gemini 2.0 / OpenRouter) 
-                 |---> 4. FILTER (Validation / Geo / Recency) 
-                        |---> 5. DISPLAY & CACHE (SQLite + Streamlit)
-```
+## Setup Instructions
 
-For complete technical specifications, see [`Kleros_Architecture.md`](file:///d:/Projects/Kleros/Kleros_Architecture.md).
+1. Clone the repository:
+   git clone https://github.com/Hashimk101/Kleros.git
+   cd Kleros
 
----
+2. Create a virtual environment and activate it:
+   python -m venv venv
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
 
-## Quick Start Guide
+3. Install the required dependencies:
+   pip install -r requirements.txt
 
-### 1. Installation
+4. Set up environment variables:
+   Copy the example environment file and configure it with your API keys.
+   cp .env.example .env
 
-Clone the repository and install dependencies:
+## API Configuration
 
-```bash
-git clone https://github.com/Hashimk101/Kleros.git
-cd Kleros
-pip install -r requirements.txt
-```
+To run the pipeline, you need to configure the following API keys in your .env file:
 
-### 2. Environment Configuration
+- GEMINI_API_KEY: Required for the primary LLM extraction step. You can obtain a free tier key from Google AI Studio.
+- OPENROUTER_API_KEY: Required for the fallback extraction step. OpenRouter provides access to free open-weights models (like Gemma and Llama) that the system uses if Gemini is rate-limited.
+- JINA_API_KEY (Optional but recommended): Jina Reader is used to parse web pages into clean markdown. If not provided or if rate-limited, the system will fall back to direct HTTP requests.
 
-Copy `.env.example` to `.env` and set your API keys:
+## Running the Dashboard
 
-```bash
-cp .env.example .env
-```
+To launch the Streamlit dashboard:
 
-Edit `.env`:
-
-```env
-# Primary LLM API Key (Required)
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# Fallback LLM API Key (Required)
-OPENROUTER_API_KEY=your_openrouter_api_key_here
-
-# Optional SearXNG instances
-SEARX_1=https://searx.tiekoetter.com/
-SEARX_2=https://searx.rhscz.eu/
-SEARX_3=https://search.rhscz.eu/
-```
-
----
-
-## Running the Application
-
-### Launch Streamlit Interactive Dashboard
-
-```bash
 streamlit run dashboard.py
-```
 
-Open your browser at `http://localhost:8501` to use the interactive dashboard:
-1. Enter your search query or use the pre-configured prompt.
-2. Click **Run Agent** to trigger the discovery pipeline.
-3. Track progress live in the execution feed.
-4. Filter deals by type (`API`, `IDE`, `Chat`, `Student`) or region.
-5. Export deal reports to CSV.
+The dashboard will be available at http://localhost:8501. From the UI, you can trigger the autonomous discovery pipeline, filter results by category and region, and export verified deals as a CSV file.
 
----
+## Running Unit Tests
 
-## Running Automated Tests
+The project includes a suite of unit tests to verify the pipeline components, including database storage, search routing, and filter logic.
 
-Kleros includes a comprehensive test suite for all pipeline components:
+To run the tests, execute the following command in the root directory:
 
-```bash
 python -m unittest discover tests
-```
 
----
-
-## Repository Structure
-
-```
-Kleros/
-├── src/
-│   ├── __init__.py
-│   ├── database.py       # SQLite database initialization & CRUD queries
-│   ├── search.py         # Multi-source search router (DuckDuckGo + SearXNG)
-│   ├── fetch.py          # Async content fetcher via Jina Reader
-│   ├── extractor.py      # Structured LLM offer extractor (Gemini + OpenRouter)
-│   ├── filter.py         # Filtering & validation engine (Geo, Recency, Deduplication)
-│   └── agent.py          # Main KlerosAgent pipeline orchestrator
-├── tests/
-│   ├── test_database.py  # SQLite DB unit tests
-│   ├── test_search.py    # Search router unit tests
-│   ├── test_fetch.py     # Content fetcher unit tests
-│   ├── test_extractor.py # LLM extractor unit tests
-│   ├── test_filter.py    # Filter engine unit tests
-│   └── test_agent.py    # Orchestrator end-to-end tests
-├── dashboard.py          # Interactive Streamlit dashboard
-├── requirements.txt      # Python dependencies
-├── .env.example          # Environment variables template
-├── Kleros_Architecture.md # Project architecture blueprint
-├── README.md             # Project documentation
-└── LICENSE               # GNU General Public License v3.0
-```
-
----
-
-## License
-
-Distributed under the **GNU General Public License v3.0**. See `LICENSE` for details.
+This will automatically discover and execute all tests located in the tests/ directory.
