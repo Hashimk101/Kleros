@@ -1,5 +1,5 @@
 """
-Content Fetcher module using Jina Reader API to extract clean Markdown from web pages.
+Content Fetcher module using Jina Reader API with direct httpx fallback.
 """
 
 import asyncio
@@ -10,14 +10,19 @@ import httpx
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DEFAULT_HEADERS = {
+JINA_HEADERS = {
+    "Accept": "text/plain",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+}
+
+DIRECT_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
 }
 
 
 class ContentFetcher:
-    """Fetches clean Markdown content using Jina Reader API (https://r.jina.ai/)."""
+    """Fetches clean content using Jina Reader API with direct httpx fallback."""
 
     def __init__(
         self,
@@ -29,26 +34,52 @@ class ContentFetcher:
         self.timeout = timeout
         self.fetch_delay = fetch_delay
 
-    async def fetch_url_async(self, client: httpx.AsyncClient, target_url: str) -> Optional[str]:
-        """Fetch clean Markdown content for a single URL asynchronously using Jina Reader."""
+    async def fetch_via_jina(self, client: httpx.AsyncClient, target_url: str) -> Optional[str]:
+        """Fetch clean Markdown via Jina Reader."""
         jina_url = f"{self.jina_prefix.rstrip('/')}/{target_url}"
         try:
-            logger.info(f"Fetching content via Jina Reader: {target_url}")
-            response = await client.get(jina_url, headers=DEFAULT_HEADERS, timeout=self.timeout)
+            response = await client.get(jina_url, headers=JINA_HEADERS, timeout=self.timeout)
             if response.status_code == 200 and response.text.strip():
                 return response.text
             else:
-                logger.warning(f"Jina Reader returned status {response.status_code} for {target_url}")
+                logger.warning(f"Jina returned {response.status_code} for {target_url}")
                 return None
         except Exception as e:
-            logger.warning(f"Failed to fetch content for {target_url} via Jina Reader: {e}")
+            logger.warning(f"Jina failed for {target_url}: {e}")
             return None
 
+    async def fetch_direct(self, client: httpx.AsyncClient, target_url: str) -> Optional[str]:
+        """Fallback: fetch raw HTML directly and extract text."""
+        try:
+            response = await client.get(target_url, headers=DIRECT_HEADERS, timeout=self.timeout)
+            if response.status_code == 200 and response.text.strip():
+                text = response.text
+                # Basic HTML tag stripping for LLM consumption
+                import re
+                text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.DOTALL)
+                text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL)
+                text = re.sub(r'<[^>]+>', ' ', text)
+                text = re.sub(r'\s+', ' ', text).strip()
+                if len(text) > 200:  # Only keep if there's meaningful content
+                    return text[:15000]
+            return None
+        except Exception as e:
+            logger.warning(f"Direct fetch failed for {target_url}: {e}")
+            return None
+
+    async def fetch_url_async(self, client: httpx.AsyncClient, target_url: str) -> Optional[str]:
+        """Try Jina first, fall back to direct fetch."""
+        logger.info(f"Fetching content: {target_url}")
+        content = await self.fetch_via_jina(client, target_url)
+        if content:
+            return content
+
+        logger.info(f"Jina failed, trying direct fetch: {target_url}")
+        content = await self.fetch_direct(client, target_url)
+        return content
+
     async def fetch_all_async(self, search_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Fetch content for a list of search results in parallel.
-        Returns search results enriched with a 'markdown_content' field.
-        """
+        """Fetch content for all search results with Jina + direct fallback."""
         fetched_results: List[Dict[str, Any]] = []
         async with httpx.AsyncClient(follow_redirects=True) as client:
             tasks = []
@@ -67,8 +98,9 @@ class ContentFetcher:
                     item_copy["markdown_content"] = content
                     fetched_results.append(item_copy)
                 else:
-                    logger.warning(f"Skipping {item.get('url')} due to missing or failed content.")
+                    logger.warning(f"Skipping {item.get('url')} - no content retrieved.")
 
+        logger.info(f"ContentFetcher retrieved content for {len(fetched_results)}/{len(search_results)} URLs.")
         return fetched_results
 
     def fetch_all(self, search_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -78,6 +110,5 @@ class ContentFetcher:
         try:
             return asyncio.run(self.fetch_all_async(search_results))
         except RuntimeError:
-            # Fallback if an event loop is already running (e.g., in Jupyter/Streamlit)
             loop = asyncio.get_event_loop()
             return loop.run_until_complete(self.fetch_all_async(search_results))

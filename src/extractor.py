@@ -1,5 +1,5 @@
 """
-LLM Extractor module using Google Gemini 2.0 Flash with OpenRouter fallback for offer extraction.
+LLM Extractor module using Google Gemini with OpenRouter fallback for offer extraction.
 """
 
 import json
@@ -39,19 +39,35 @@ Return a JSON array of objects. Each object MUST include:
 CRITICAL: Return ONLY a valid JSON array. Do not include markdown code block backticks or extra text outside the JSON.
 """
 
+# OpenRouter free models to try in order of preference
+OPENROUTER_FREE_MODELS = [
+    "google/gemma-4-31b-it:free",
+    "google/gemma-4-26b-a4b-it:free",
+    "openai/gpt-oss-20b:free",
+    "inclusionai/ling-3.0-flash:free",
+]
+
+# Gemini models to try in order
+GEMINI_MODELS = [
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+]
+
 
 class LLMExtractor:
-    """Extracts structured offers from web markdown using Gemini 2.0 Flash or OpenRouter."""
+    """Extracts structured offers from web markdown using Gemini or OpenRouter."""
 
     def __init__(
         self,
         gemini_key: Optional[str] = None,
         openrouter_key: Optional[str] = None,
-        llm_delay: float = 2.0
+        llm_delay: float = 2.0,
+        max_retries: int = 2
     ):
         self.gemini_key = gemini_key or os.getenv("GEMINI_API_KEY")
         self.openrouter_key = openrouter_key or os.getenv("OPENROUTER_API_KEY")
         self.llm_delay = llm_delay
+        self.max_retries = max_retries
 
         self.gemini_client = None
         if self.gemini_key:
@@ -68,68 +84,84 @@ class LLMExtractor:
         return text.strip()
 
     def extract_with_gemini(self, page_content: str, url: str) -> Optional[List[Dict[str, Any]]]:
-        """Extract offers using Google Gemini 2.0 Flash."""
+        """Extract offers using Gemini with retry on rate limits."""
         if not self.gemini_client:
             return None
 
-        prompt = f"{SYSTEM_PROMPT}\n\nTarget URL: {url}\n\nPage Content:\n{page_content[:15000]}"
-        try:
-            logger.info(f"Extracting offers with Gemini 2.0 Flash for: {url}")
-            response = self.gemini_client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt
-            )
-            raw_text = response.text or ""
-            cleaned = self._clean_json_text(raw_text)
-            data = json.loads(cleaned)
-            if isinstance(data, list):
-                return data
-        except Exception as e:
-            logger.warning(f"Gemini extraction failed for {url}: {e}")
+        prompt = f"{SYSTEM_PROMPT}\n\nTarget URL: {url}\n\nPage Content:\n{page_content[:12000]}"
+
+        for model_name in GEMINI_MODELS:
+            for attempt in range(self.max_retries):
+                try:
+                    logger.info(f"Extracting with {model_name} for: {url} (attempt {attempt + 1})")
+                    response = self.gemini_client.models.generate_content(
+                        model=model_name,
+                        contents=prompt
+                    )
+                    raw_text = response.text or ""
+                    cleaned = self._clean_json_text(raw_text)
+                    data = json.loads(cleaned)
+                    if isinstance(data, list):
+                        return data
+                except Exception as e:
+                    error_str = str(e)
+                    if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+                        wait_time = 15 * (attempt + 1)
+                        logger.warning(f"{model_name} rate limited. Waiting {wait_time}s before retry...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        logger.warning(f"{model_name} extraction failed for {url}: {e}")
+                        break  # Non-rate-limit error, try next model
         return None
 
     def extract_with_openrouter(self, page_content: str, url: str) -> Optional[List[Dict[str, Any]]]:
-        """Fallback extraction using OpenRouter free models API."""
+        """Fallback extraction using OpenRouter free models."""
         if not self.openrouter_key:
             return None
 
-        prompt = f"{SYSTEM_PROMPT}\n\nTarget URL: {url}\n\nPage Content:\n{page_content[:15000]}"
         headers = {
             "Authorization": f"Bearer {self.openrouter_key}",
             "Content-Type": "application/json"
         }
-        payload = {
-            "model": "google/gemini-2.0-flash-lite-001",
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Target URL: {url}\n\nPage Content:\n{page_content[:15000]}"}
-            ],
-            "temperature": 0.2
-        }
 
-        try:
-            logger.info(f"Extracting offers with OpenRouter fallback for: {url}")
-            response = httpx.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                json=payload,
-                headers=headers,
-                timeout=20.0
-            )
-            if response.status_code == 200:
-                res_data = response.json()
-                content = res_data["choices"][0]["message"]["content"]
-                cleaned = self._clean_json_text(content)
-                data = json.loads(cleaned)
-                if isinstance(data, list):
-                    return data
-        except Exception as e:
-            logger.warning(f"OpenRouter extraction failed for {url}: {e}")
+        for model_id in OPENROUTER_FREE_MODELS:
+            payload = {
+                "model": model_id,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Target URL: {url}\n\nPage Content:\n{page_content[:12000]}"}
+                ],
+                "temperature": 0.2
+            }
+
+            try:
+                logger.info(f"Trying OpenRouter model {model_id} for: {url}")
+                response = httpx.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    json=payload,
+                    headers=headers,
+                    timeout=30.0
+                )
+                if response.status_code == 200:
+                    res_data = response.json()
+                    content = res_data["choices"][0]["message"]["content"]
+                    cleaned = self._clean_json_text(content)
+                    data = json.loads(cleaned)
+                    if isinstance(data, list):
+                        logger.info(f"OpenRouter {model_id} extracted {len(data)} offers.")
+                        return data
+                else:
+                    logger.warning(f"OpenRouter {model_id} returned {response.status_code}")
+                    continue
+            except Exception as e:
+                logger.warning(f"OpenRouter {model_id} failed for {url}: {e}")
+                continue
+
         return None
 
     def extract_offers_from_page(self, page_content: str, url: str) -> List[Dict[str, Any]]:
-        """
-        Attempt extraction via Gemini primary first, fallback to OpenRouter.
-        """
+        """Attempt extraction via Gemini first, fallback to OpenRouter."""
         if not page_content or not page_content.strip():
             return []
 
@@ -139,7 +171,7 @@ class LLMExtractor:
             return offers
 
         # 2. Fallback to OpenRouter
-        logger.info(f"Primary LLM failed/unavailable for {url}. Trying OpenRouter fallback...")
+        logger.info(f"Gemini unavailable for {url}. Trying OpenRouter fallback...")
         offers = self.extract_with_openrouter(page_content, url)
         if offers is not None:
             return offers
@@ -159,7 +191,6 @@ class LLMExtractor:
             offers = self.extract_offers_from_page(content, url)
             for offer in offers:
                 if isinstance(offer, dict):
-                    # Ensure url field is set if missing
                     if "url" not in offer or not offer["url"]:
                         offer["url"] = url
                     if "source_url" not in offer:
