@@ -49,7 +49,7 @@ class TestKlerosAgent(unittest.TestCase):
         def callback(step, msg, pct):
             progress_calls.append((step, pct))
 
-        result = self.agent.run(query="test query", max_results=5, progress_callback=callback)
+        result = self.agent.run(custom_query="test query", max_results=5, progress_callback=callback)
 
         self.assertEqual(result["valid_offers_count"], 1)
         self.assertEqual(result["new_offers_count"], 1)

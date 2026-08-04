@@ -18,7 +18,19 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DEFAULT_QUERY = "free LLM API credits IDE subscriptions for students 2026"
+CATEGORY_QUERIES = {
+    "All": "free LLM API credits student IDE subscriptions ChatGPT Edu Gemini Flash 2026",
+    "API": "free LLM API credits OpenRouter Gemini Flash Claude Groq student 2026",
+    "IDE": "free IDE credits Zed Antigravity Cursor GitHub Copilot student 2026",
+    "Chat": "free chat subscriptions ChatGPT Edu Gemini Student Claude Pro 2026",
+    "Student": "student AI discounts free credits developer programs 2026"
+}
+
+
+def build_autonomous_query(category: str = "All") -> str:
+    """Automatically synthesize search queries based on requested category."""
+    cat_key = category.strip().capitalize() if category else "All"
+    return CATEGORY_QUERIES.get(cat_key, CATEGORY_QUERIES["All"])
 
 
 class KlerosAgent:
@@ -41,16 +53,19 @@ class KlerosAgent:
 
     def run(
         self,
-        query: str = DEFAULT_QUERY,
+        category: str = "All",
+        custom_query: Optional[str] = None,
         max_results: int = 10,
         max_pages: int = 5,
         progress_callback: Optional[Callable[[str, str, float], None]] = None
     ) -> Dict[str, Any]:
         """
         Execute full autonomous discovery pipeline:
-        1. SEARCH -> 2. FETCH -> 3. EXTRACT -> 4. FILTER -> 5. DISPLAY / STORE
+        1. SEARCH -> 2. FETCH -> 3. EXTRACT -> 4. FILTER -> 5. STORE
+        Automatically constructs search query if custom_query is not explicitly set.
         """
-        logger.info(f"Starting Kleros Agent pipeline for query: '{query}'")
+        query = custom_query or build_autonomous_query(category)
+        logger.info(f"Starting Kleros Agent pipeline for category '{category}' with query: '{query}'")
 
         def notify(step: str, msg: str, pct: float):
             if progress_callback:
@@ -58,9 +73,9 @@ class KlerosAgent:
             logger.info(f"[{step} - {int(pct * 100)}%] {msg}")
 
         # Step 1: SEARCH
-        notify("Search", f"Searching for '{query}' across DuckDuckGo and SearXNG...", 0.1)
+        notify("Search", f"Autonomous search running for query: '{query}'", 0.1)
         search_results = self.search_router.search(query=query, max_results=max_results)
-        notify("Search", f"Found {len(search_results)} search results.", 0.25)
+        notify("Search", f"Discovered {len(search_results)} search results.", 0.25)
 
         if not search_results:
             notify("Complete", "No search results discovered.", 1.0)
@@ -95,6 +110,7 @@ class KlerosAgent:
 
         return {
             "query": query,
+            "category": category,
             "raw_search_count": len(search_results),
             "fetched_pages_count": len(fetched_pages),
             "raw_offers_count": len(raw_offers),

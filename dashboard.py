@@ -1,5 +1,6 @@
 """
-Streamlit Dashboard for Kleros Autonomous Discovery Agent.
+Swiss Minimalist Dashboard for Kleros Autonomous Discovery Agent.
+Inspired by Linear and Vercel design systems.
 """
 
 import json
@@ -8,172 +9,202 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
-from src.agent import DEFAULT_QUERY, KlerosAgent
+from src.agent import KlerosAgent, build_autonomous_query
 from src.database import DatabaseManager
 
 load_dotenv()
 
 # Page configuration
 st.set_page_config(
-    page_title="Kleros - Free AI Resource Discovery Agent",
+    page_title="Kleros - Autonomous Discovery Agent",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Custom Cyber-Dark Styling
+# Swiss Minimalist CSS System
 st.markdown("""
 <style>
-    /* Dark Theme Core */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    /* Reset & Base Canvas */
     .stApp {
-        background: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #0b0f19 100%);
-        color: #f8fafc;
+        background-color: #08090a;
+        color: #f3f4f6;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"],
-    section[data-testid="stSidebar"] > div {
-        background-color: #0f172a !important;
-        color: #f8fafc !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    /* Remove default sidebar space if collapsed */
+    section[data-testid="stSidebar"] {
+        display: none;
     }
-    section[data-testid="stSidebar"] h1,
-    section[data-testid="stSidebar"] h2,
-    section[data-testid="stSidebar"] h3,
-    section[data-testid="stSidebar"] label,
-    section[data-testid="stSidebar"] p,
-    section[data-testid="stSidebar"] span {
-        color: #e2e8f0 !important;
-    }
-    
-    /* Selectbox & Input Dropdown Overflow & Red Outline Fix */
-    div[data-baseweb="select"] > div {
-        background-color: #1e293b !important;
-        border: 1px solid #334155 !important;
-        border-radius: 8px !important;
-        color: #f8fafc !important;
-        padding-top: 2px !important;
-        padding-bottom: 2px !important;
-    }
-    div[data-baseweb="select"] * {
-        color: #f8fafc !important;
-    }
-    div[data-baseweb="select"]:focus-within > div,
-    .stTextInput > div > div:focus-within {
-        border-color: #6366f1 !important;
-        box-shadow: 0 0 0 1px #6366f1 !important;
-    }
-    ul[data-baseweb="menu"] {
-        background-color: #1e293b !important;
-        border: 1px solid #334155 !important;
-    }
-    li[data-baseweb="menu-item"] {
-        background-color: #1e293b !important;
-        color: #f8fafc !important;
-    }
-    li[data-baseweb="menu-item"]:hover {
-        background-color: #334155 !important;
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        max-width: 1200px;
     }
 
-    /* Text Input Styling */
-    .stTextInput > div > div > input {
-        background-color: #1e293b !important;
-        color: #f8fafc !important;
-        border: 1px solid #334155 !important;
-        border-radius: 8px !important;
+    /* Header Bar */
+    .brand-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #1f2228;
+        margin-bottom: 2rem;
+    }
+    .brand-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: #ffffff;
+        margin: 0;
+    }
+    .brand-subtitle {
+        color: #8a8f98;
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
     }
 
-    /* Button Styling */
+    /* Minimal Metric Grid */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .metric-card {
+        background: #0d0e12;
+        border: 1px solid #1f2228;
+        border-radius: 6px;
+        padding: 1rem;
+        text-align: left;
+    }
+    .metric-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        color: #6f747c;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    .metric-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #f3f4f6;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Streamlit Button Override */
     .stButton > button {
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
-        color: #ffffff !important;
-        border: none !important;
-        border-radius: 8px !important;
+        background-color: #ffffff !important;
+        color: #08090a !important;
+        border: 1px solid #ffffff !important;
+        border-radius: 6px !important;
         font-weight: 600 !important;
-        transition: all 0.2s ease !important;
+        font-size: 0.9rem !important;
+        padding: 0.5rem 1.25rem !important;
+        transition: all 0.15s ease !important;
         height: 42px !important;
     }
     .stButton > button:hover {
-        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4) !important;
+        background-color: #e2e8f0 !important;
+        border-color: #e2e8f0 !important;
+        box-shadow: 0 0 12px rgba(255, 255, 255, 0.15) !important;
     }
 
-    /* Metrics Cards */
-    [data-testid="stMetric"] {
-        background: rgba(30, 41, 59, 0.5);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 1rem;
-        text-align: center;
+    /* Selectbox & Input Clean Override */
+    div[data-baseweb="select"] > div {
+        background-color: #0d0e12 !important;
+        border: 1px solid #1f2228 !important;
+        border-radius: 6px !important;
+        color: #f3f4f6 !important;
     }
-    [data-testid="stMetricValue"] {
-        color: #818cf8 !important;
-        font-weight: 700 !important;
-        font-size: 1.8rem !important;
+    div[data-baseweb="select"] * {
+        color: #f3f4f6 !important;
     }
-    [data-testid="stMetricLabel"] {
-        color: #94a3b8 !important;
-        font-weight: 500 !important;
+    div[data-baseweb="select"]:focus-within > div {
+        border-color: #4b5563 !important;
+        box-shadow: none !important;
     }
 
-    /* Hero Container */
-    .hero-card {
-        background: rgba(30, 41, 59, 0.6);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-    }
-    
-    /* Deal Card Styling */
-    .offer-card {
-        background: rgba(30, 41, 59, 0.5);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
+    /* Deal Card Grid */
+    .deal-card {
+        background: #0d0e12;
+        border: 1px solid #1f2228;
+        border-radius: 6px;
         padding: 1.25rem;
         margin-bottom: 1rem;
-        transition: transform 0.2s ease, border-color 0.2s ease;
+        transition: border-color 0.15s ease;
     }
-    .offer-card:hover {
-        transform: translateY(-2px);
-        border-color: rgba(99, 102, 241, 0.4);
+    .deal-card:hover {
+        border-color: #374151;
     }
-    
-    /* Badges */
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.65rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
+    .tag-mono {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.72rem;
+        font-weight: 500;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
         text-transform: uppercase;
-        margin-right: 0.5rem;
-    }
-    .badge-api { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
-    .badge-ide { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; }
-    .badge-chat { background: linear-gradient(135deg, #10b981, #047857); color: white; }
-    .badge-student { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; }
-    .badge-geo { background: rgba(255, 255, 255, 0.1); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.2); }
-    .badge-us { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
-
-    /* Action Link */
-    .claim-btn {
+        margin-right: 0.4rem;
         display: inline-block;
-        background: linear-gradient(135deg, #6366f1, #4f46e5);
-        color: white !important;
-        padding: 0.45rem 1.1rem;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.85rem;
-        margin-top: 0.75rem;
-        transition: opacity 0.2s ease;
     }
-    .claim-btn:hover {
-        opacity: 0.9;
+    .tag-api { background: #1e293b; color: #38bdf8; border: 1px solid #334155; }
+    .tag-ide { background: #2e1065; color: #c084fc; border: 1px solid #581c87; }
+    .tag-chat { background: #064e3b; color: #34d399; border: 1px solid #065f46; }
+    .tag-student { background: #451a03; color: #fbbf24; border: 1px solid #78350f; }
+    .tag-geo { background: #111827; color: #9ca3af; border: 1px solid #1f2937; }
+    .tag-us { background: #451212; color: #f87171; border: 1px solid #7f1d1d; }
+
+    .deal-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #f9fafb;
+        margin-top: 0.6rem;
+        margin-bottom: 0.3rem;
+        letter-spacing: -0.01em;
+    }
+    .deal-value {
+        font-family: 'JetBrains Mono', monospace;
+        color: #10b981;
+        font-size: 0.88rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    .deal-desc {
+        color: #8a8f98;
+        font-size: 0.85rem;
+        line-height: 1.45;
+        margin-bottom: 1rem;
+    }
+    .claim-link {
+        display: inline-flex;
+        align-items: center;
+        color: #f3f4f6 !important;
+        background: #161922;
+        border: 1px solid #272c38;
+        padding: 0.4rem 0.85rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-decoration: none !important;
+        transition: background 0.15s ease;
+    }
+    .claim-link:hover {
+        background: #212636;
+        border-color: #3b4254;
+    }
+
+    /* Terminal Feed Box */
+    .terminal-box {
+        background: #050607;
+        border: 1px solid #1f2228;
+        border-radius: 6px;
+        padding: 1rem;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.82rem;
+        color: #10b981;
+        margin-bottom: 1.5rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -186,84 +217,96 @@ def get_db():
 
 db = get_db()
 
-# Hero Section
+# Top Brand Header
 st.markdown("""
-<div class="hero-card">
-    <h1 style="margin: 0; font-size: 2.2rem; background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-        KLEROS: Autonomous Discovery Agent
-    </h1>
-    <p style="color: #94a3b8; font-size: 1.05rem; margin-top: 0.5rem; margin-bottom: 0;">
-        Autonomous discovery of free LLM API credits, IDE subscriptions, and student AI deals.
-    </p>
+<div class="brand-header">
+    <div>
+        <h1 class="brand-title">KLEROS / Autonomous Discovery Agent</h1>
+        <div class="brand-subtitle">Autonomous discovery engine for free LLM API credits, IDE subscriptions, and student AI deals.</div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Search Control Bar
-col_q, col_btn = st.columns([4, 1])
-with col_q:
-    search_query = st.text_input(
-        "Search Query",
-        value=DEFAULT_QUERY,
-        placeholder="Enter search terms..."
+# Top Action Toolbar (No query text box needed!)
+col_action, col_type_filter, col_reg_filter = st.columns([1.5, 1, 1])
+
+with col_action:
+    st.markdown("<div style='font-size: 0.75rem; font-weight: 600; color: #6f747c; text-transform: uppercase; margin-bottom: 0.4rem;'>Discovery Trigger</div>", unsafe_allow_html=True)
+    trigger_discovery = st.button("Discover Free Deals", use_container_width=True)
+
+with col_type_filter:
+    st.markdown("<div style='font-size: 0.75rem; font-weight: 600; color: #6f747c; text-transform: uppercase; margin-bottom: 0.4rem;'>Filter Category</div>", unsafe_allow_html=True)
+    selected_type = st.selectbox(
+        "Filter Category",
+        ["All", "API", "IDE", "Chat", "Student"],
+        label_visibility="collapsed"
     )
 
-with col_btn:
-    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-    run_agent = st.button("Run Agent", use_container_width=True, type="primary")
+with col_reg_filter:
+    st.markdown("<div style='font-size: 0.75rem; font-weight: 600; color: #6f747c; text-transform: uppercase; margin-bottom: 0.4rem;'>Filter Region</div>", unsafe_allow_html=True)
+    selected_region = st.selectbox(
+        "Filter Region",
+        ["All", "Global", "US", "Europe", "Asia"],
+        label_visibility="collapsed"
+    )
 
-# Sidebar Controls
-st.sidebar.markdown("### Agent Controls")
+st.markdown("<div style='margin-bottom: 1.5rem;'></div>", unsafe_allow_html=True)
 
-max_pages = st.sidebar.slider("Max Web Pages to Process", min_value=1, max_value=10, value=5)
-max_results = st.sidebar.slider("Max Search Results", min_value=5, max_value=25, value=10)
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("### Filter Offers")
-
-selected_type = st.sidebar.selectbox(
-    "Offer Type",
-    ["All", "API", "IDE", "Chat", "Student"]
-)
-
-selected_region = st.sidebar.selectbox(
-    "Eligible Region",
-    ["All", "Global", "US", "Europe", "Asia"]
-)
-
-# Run Agent Logic
-if run_agent:
-    st.markdown("### Agent Execution Live Feed")
+# Run Autonomous Discovery Pipeline
+if trigger_discovery:
+    st.markdown("### Discovery Pipeline Status")
     progress_bar = st.progress(0.0)
-    status_text = st.empty()
+    log_area = st.empty()
 
     def update_progress(step: str, msg: str, pct: float):
         progress_bar.progress(pct)
-        status_text.markdown(f"**[{step}]**: {msg}")
+        log_area.markdown(f"""
+        <div class="terminal-box">
+            [$] STEP [{step.upper()}] - {msg}
+        </div>
+        """, unsafe_allow_html=True)
 
     try:
         agent = KlerosAgent()
+        # Autonomous query synthesis based on selected category!
         result = agent.run(
-            query=search_query,
-            max_results=max_results,
-            max_pages=max_pages,
+            category=selected_type,
+            max_results=10,
+            max_pages=5,
             progress_callback=update_progress
         )
-        st.success(f"Agent Execution Complete! Discovered {result['valid_offers_count']} offers ({result['new_offers_count']} new saved).")
+        st.success(f"Discovery Complete. Discovered {result['valid_offers_count']} offers ({result['new_offers_count']} new saved).")
     except Exception as e:
-        st.error(f"Error during execution: {e}")
+        st.error(f"Execution error: {e}")
 
-# Load Statistics
+# Fetch Stats
 stats = db.get_stats()
 
-# Stats Counter Section
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("Total Offers", stats.get("total_offers", 0))
-c2.metric("New Today", stats.get("new_today", 0))
-c3.metric("API Credits", stats.get("by_type", {}).get("api", 0))
-c4.metric("IDE Credits", stats.get("by_type", {}).get("ide", 0))
-c5.metric("Chat Subscriptions", stats.get("by_type", {}).get("chat", 0))
-
-st.markdown("---")
+# Swiss Minimalist Metrics Section
+st.markdown(f"""
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-label">TOTAL DEALS</div>
+        <div class="metric-value">{stats.get("total_offers", 0)}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">NEW TODAY</div>
+        <div class="metric-value">{stats.get("new_today", 0)}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">API CREDITS</div>
+        <div class="metric-value">{stats.get("by_type", {}).get("api", 0)}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">IDE CREDITS</div>
+        <div class="metric-value">{stats.get("by_type", {}).get("ide", 0)}</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">CHAT PLANS</div>
+        <div class="metric-value">{stats.get("by_type", {}).get("chat", 0)}</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # Query Database
 offers = db.get_offers(
@@ -272,66 +315,51 @@ offers = db.get_offers(
     is_valid_only=True
 )
 
-st.subheader(f"Discovered Free Offers ({len(offers)})")
+col_head, col_exp = st.columns([3, 1])
+with col_head:
+    st.markdown(f"<h3 style='font-size: 1.1rem; font-weight: 600; color: #ffffff;'>Verified Deals ({len(offers)})</h3>", unsafe_allow_html=True)
 
-# Export CSV Section
-if offers:
-    df = pd.DataFrame(offers)
-    csv_data = df.to_csv(index=False).encode('utf-8')
-    st.sidebar.markdown("---")
-    st.sidebar.download_button(
-        label="Export Offers CSV",
-        data=csv_data,
-        file_name="kleros_free_ai_offers.csv",
-        mime="text/csv",
-        use_container_width=True
-    )
+with col_exp:
+    if offers:
+        df = pd.DataFrame(offers)
+        csv_data = df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Export CSV",
+            data=csv_data,
+            file_name="kleros_verified_deals.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
 
 if not offers:
-    st.info("No offers found matching your current filter. Click Run Agent to discover new deals.")
+    st.info("No deals recorded for this filter. Click 'Discover Free Deals' above to run autonomous search.")
 else:
-    # Display offer cards in 2-column grid
-    col_a, col_b = st.columns(2)
+    col_left, col_right = st.columns(2)
     for idx, offer in enumerate(offers):
-        target_col = col_a if idx % 2 == 0 else col_b
+        target_col = col_left if idx % 2 == 0 else col_right
         with target_col:
             off_type = offer.get("offer_type", "api").lower()
-            badge_class = f"badge-{off_type}" if off_type in ["api", "ide", "chat", "student"] else "badge-api"
-            
-            geo_restricted = offer.get("geo_restricted", False)
+            badge_cls = f"tag-{off_type}" if off_type in ["api", "ide", "chat", "student"] else "tag-api"
+
             regions = offer.get("eligible_regions", ["global"])
-            geo_badge_class = "badge-us" if ("us" in regions or "usa" in regions) and len(regions) == 1 else "badge-geo"
-            geo_label = "US-Only" if geo_badge_class == "badge-us" else ", ".join(regions).upper()
+            is_us = ("us" in regions or "usa" in regions) and len(regions) == 1
+            geo_cls = "tag-us" if is_us else "tag-geo"
+            geo_lbl = "US-ONLY" if is_us else ", ".join(regions).upper()
 
             st.markdown(f"""
-            <div class="offer-card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="deal-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <span class="badge {badge_class}">{off_type.upper()}</span>
-                        <span class="badge {geo_badge_class}">{geo_label}</span>
+                        <span class="tag-mono {badge_cls}">{off_type.upper()}</span>
+                        <span class="tag-mono {geo_cls}">{geo_lbl}</span>
                     </div>
-                    <span style="color: #64748b; font-size: 0.8rem;">{offer.get('date_posted') or 'Active'}</span>
+                    <span style="color: #6f747c; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;">{offer.get('date_posted') or 'VERIFIED'}</span>
                 </div>
-                <h3 style="color: #f1f5f9; font-size: 1.15rem; margin-top: 0.6rem; margin-bottom: 0.3rem;">
-                    {offer.get('name')}
-                </h3>
-                <p style="color: #38bdf8; font-weight: 600; font-size: 0.95rem; margin: 0.2rem 0;">
-                    {offer.get('value') or 'Free Deal'}
-                </p>
-                <p style="color: #94a3b8; font-size: 0.88rem; margin-top: 0.4rem; line-height: 1.4;">
-                    {offer.get('description') or 'No description provided.'}
-                </p>
-                <a href="{offer.get('url')}" target="_blank" class="claim-btn">
-                    Claim Deal ->
+                <div class="deal-title">{offer.get('name')}</div>
+                <div class="deal-value">{offer.get('value') or 'Free Credit / Discount'}</div>
+                <div class="deal-desc">{offer.get('description') or 'No description provided.'}</div>
+                <a href="{offer.get('url')}" target="_blank" class="claim-link">
+                    Claim Deal &nbsp;&rarr;
                 </a>
             </div>
             """, unsafe_allow_html=True)
-
-# Footer
-st.markdown("---")
-st.markdown(
-    "<div style='text-align: center; color: #64748b; font-size: 0.85rem; padding: 1rem;'>"
-    "Powered by <b>Google Gemini 2.0 Flash</b> + <b>DuckDuckGo</b> + <b>Jina Reader</b> | Licensed under GPL-3.0"
-    "</div>",
-    unsafe_allow_html=True
-)
