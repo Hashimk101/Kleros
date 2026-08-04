@@ -16,32 +16,120 @@ load_dotenv()
 # Page configuration
 st.set_page_config(
     page_title="Kleros - Free AI Resource Discovery Agent",
-    page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling
+# Custom Cyber-Dark Styling
 st.markdown("""
 <style>
-    /* Dark glassmorphism theme */
+    /* Dark Theme Core */
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+        background: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #0b0f19 100%);
         color: #f8fafc;
     }
     
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"] > div {
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span {
+        color: #e2e8f0 !important;
+    }
+    
+    /* Selectbox & Input Dropdown Overflow & Red Outline Fix */
+    div[data-baseweb="select"] > div {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+        color: #f8fafc !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
+    }
+    div[data-baseweb="select"] * {
+        color: #f8fafc !important;
+    }
+    div[data-baseweb="select"]:focus-within > div,
+    .stTextInput > div > div:focus-within {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 1px #6366f1 !important;
+    }
+    ul[data-baseweb="menu"] {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+    }
+    li[data-baseweb="menu-item"] {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+    }
+    li[data-baseweb="menu-item"]:hover {
+        background-color: #334155 !important;
+    }
+
+    /* Text Input Styling */
+    .stTextInput > div > div > input {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+    }
+
+    /* Button Styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+        height: 42px !important;
+    }
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4) !important;
+    }
+
+    /* Metrics Cards */
+    [data-testid="stMetric"] {
+        background: rgba(30, 41, 59, 0.5);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+    }
+    [data-testid="stMetricValue"] {
+        color: #818cf8 !important;
+        font-weight: 700 !important;
+        font-size: 1.8rem !important;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+    }
+
+    /* Hero Container */
     .hero-card {
-        background: rgba(30, 41, 59, 0.7);
+        background: rgba(30, 41, 59, 0.6);
         backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 16px;
         padding: 2rem;
         margin-bottom: 2rem;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
     }
     
+    /* Deal Card Styling */
     .offer-card {
-        background: rgba(30, 41, 59, 0.6);
+        background: rgba(30, 41, 59, 0.5);
         backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 12px;
@@ -49,12 +137,12 @@ st.markdown("""
         margin-bottom: 1rem;
         transition: transform 0.2s ease, border-color 0.2s ease;
     }
-    
     .offer-card:hover {
         transform: translateY(-2px);
         border-color: rgba(99, 102, 241, 0.4);
     }
     
+    /* Badges */
     .badge {
         display: inline-block;
         padding: 0.25rem 0.65rem;
@@ -64,7 +152,6 @@ st.markdown("""
         text-transform: uppercase;
         margin-right: 0.5rem;
     }
-    
     .badge-api { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
     .badge-ide { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; }
     .badge-chat { background: linear-gradient(135deg, #10b981, #047857); color: white; }
@@ -72,16 +159,18 @@ st.markdown("""
     .badge-geo { background: rgba(255, 255, 255, 0.1); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.2); }
     .badge-us { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
 
+    /* Action Link */
     .claim-btn {
         display: inline-block;
         background: linear-gradient(135deg, #6366f1, #4f46e5);
         color: white !important;
-        padding: 0.4rem 1rem;
+        padding: 0.45rem 1.1rem;
         border-radius: 8px;
         text-decoration: none;
         font-weight: 600;
         font-size: 0.85rem;
         margin-top: 0.75rem;
+        transition: opacity 0.2s ease;
     }
     .claim-btn:hover {
         opacity: 0.9;
@@ -97,14 +186,14 @@ def get_db():
 
 db = get_db()
 
-# Title Header
+# Hero Section
 st.markdown("""
 <div class="hero-card">
     <h1 style="margin: 0; font-size: 2.2rem; background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-        🏛️ KLEROS: Autonomous Discovery Agent
+        KLEROS: Autonomous Discovery Agent
     </h1>
-    <p style="color: #94a3b8; font-size: 1.1rem; margin-top: 0.5rem; margin-bottom: 0;">
-        Finds, extracts, and validates free LLM API credits, IDE subscriptions, and student deals.
+    <p style="color: #94a3b8; font-size: 1.05rem; margin-top: 0.5rem; margin-bottom: 0;">
+        Autonomous discovery of free LLM API credits, IDE subscriptions, and student AI deals.
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -115,21 +204,21 @@ with col_q:
     search_query = st.text_input(
         "Search Query",
         value=DEFAULT_QUERY,
-        placeholder="Enter topic to discover free AI credits..."
+        placeholder="Enter search terms..."
     )
 
 with col_btn:
     st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-    run_agent = st.button("🚀 Run Agent", use_container_width=True, type="primary")
+    run_agent = st.button("Run Agent", use_container_width=True, type="primary")
 
 # Sidebar Controls
-st.sidebar.title("🎛️ Agent Controls & Filters")
+st.sidebar.markdown("### Agent Controls")
 
 max_pages = st.sidebar.slider("Max Web Pages to Process", min_value=1, max_value=10, value=5)
 max_results = st.sidebar.slider("Max Search Results", min_value=5, max_value=25, value=10)
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("Filter Offers")
+st.sidebar.markdown("### Filter Offers")
 
 selected_type = st.sidebar.selectbox(
     "Offer Type",
@@ -143,7 +232,7 @@ selected_region = st.sidebar.selectbox(
 
 # Run Agent Logic
 if run_agent:
-    st.markdown("### 🔄 Agent Execution Live Feed")
+    st.markdown("### Agent Execution Live Feed")
     progress_bar = st.progress(0.0)
     status_text = st.empty()
 
@@ -191,7 +280,7 @@ if offers:
     csv_data = df.to_csv(index=False).encode('utf-8')
     st.sidebar.markdown("---")
     st.sidebar.download_button(
-        label="📥 Export Offers CSV",
+        label="Export Offers CSV",
         data=csv_data,
         file_name="kleros_free_ai_offers.csv",
         mime="text/csv",
@@ -199,7 +288,7 @@ if offers:
     )
 
 if not offers:
-    st.info("No offers found matching your current filter. Click **🚀 Run Agent** to discover new deals!")
+    st.info("No offers found matching your current filter. Click Run Agent to discover new deals.")
 else:
     # Display offer cards in 2-column grid
     col_a, col_b = st.columns(2)
@@ -212,7 +301,7 @@ else:
             geo_restricted = offer.get("geo_restricted", False)
             regions = offer.get("eligible_regions", ["global"])
             geo_badge_class = "badge-us" if ("us" in regions or "usa" in regions) and len(regions) == 1 else "badge-geo"
-            geo_label = "⚠️ US-Only" if geo_badge_class == "badge-us" else f"🌐 {', '.join(regions).upper()}"
+            geo_label = "US-Only" if geo_badge_class == "badge-us" else ", ".join(regions).upper()
 
             st.markdown(f"""
             <div class="offer-card">
@@ -227,13 +316,13 @@ else:
                     {offer.get('name')}
                 </h3>
                 <p style="color: #38bdf8; font-weight: 600; font-size: 0.95rem; margin: 0.2rem 0;">
-                    🎁 {offer.get('value') or 'Free Deal'}
+                    {offer.get('value') or 'Free Deal'}
                 </p>
                 <p style="color: #94a3b8; font-size: 0.88rem; margin-top: 0.4rem; line-height: 1.4;">
                     {offer.get('description') or 'No description provided.'}
                 </p>
                 <a href="{offer.get('url')}" target="_blank" class="claim-btn">
-                    Claim Deal ↗
+                    Claim Deal ->
                 </a>
             </div>
             """, unsafe_allow_html=True)
@@ -242,7 +331,7 @@ else:
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: #64748b; font-size: 0.85rem; padding: 1rem;'>"
-    "⚡ Powered by <b>Google Gemini 2.0 Flash</b> + <b>DuckDuckGo</b> + <b>Jina Reader</b> | Licensed under GPL-3.0"
+    "Powered by <b>Google Gemini 2.0 Flash</b> + <b>DuckDuckGo</b> + <b>Jina Reader</b> | Licensed under GPL-3.0"
     "</div>",
     unsafe_allow_html=True
 )
