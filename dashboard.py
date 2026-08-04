@@ -24,11 +24,14 @@ st.set_page_config(
 # Swiss Minimalist CSS System
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 
     /* Reset & Base Canvas */
     .stApp {
-        background-color: #08090a;
+        background-color: #0a0a0b;
+        background-image: 
+            radial-gradient(circle at center, transparent 0%, #0f1115 100%),
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
         color: #f3f4f6;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
@@ -94,22 +97,31 @@ st.markdown("""
         font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Streamlit Button Override */
-    .stButton > button {
-        background-color: #ffffff !important;
-        color: #08090a !important;
-        border: 1px solid #ffffff !important;
-        border-radius: 6px !important;
-        font-weight: 600 !important;
-        font-size: 0.9rem !important;
+    /* Premium Streamlit Button Override */
+    .stButton > button, [data-testid="stDownloadButton"] > button {
+        background: linear-gradient(180deg, #1e222a 0%, #15181e 100%) !important;
+        color: #f9fafb !important;
+        border: 1px solid #303642 !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        font-size: 0.85rem !important;
         padding: 0.5rem 1.25rem !important;
-        transition: all 0.15s ease !important;
-        height: 42px !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        height: 40px !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 2px rgba(0, 0, 0, 0.5) !important;
     }
-    .stButton > button:hover {
-        background-color: #e2e8f0 !important;
-        border-color: #e2e8f0 !important;
-        box-shadow: 0 0 12px rgba(255, 255, 255, 0.15) !important;
+    .stButton > button *, [data-testid="stDownloadButton"] > button * {
+        color: #f9fafb !important;
+    }
+    .stButton > button:hover, [data-testid="stDownloadButton"] > button:hover {
+        background: linear-gradient(180deg, #272a32 0%, #1c1e25 100%) !important;
+        border-color: #4b5563 !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 12px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+        transform: translateY(-1px) !important;
+    }
+    .stButton > button:active, [data-testid="stDownloadButton"] > button:active {
+        transform: translateY(0) !important;
+        box-shadow: none !important;
     }
 
     /* Selectbox & Input Clean Override */
