@@ -362,6 +362,14 @@ st.markdown("""
         opacity: 0.45;
         transition: opacity 0.3s ease;
     }
+    /* Gold Completion Flash */
+    @keyframes goldFlash {
+        0% { border-color: rgba(212, 175, 55, 0.8); box-shadow: 0 0 35px rgba(212, 175, 55, 0.4); }
+        100% { border-color: rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+    }
+    .completion-flash {
+        animation: goldFlash 1.5s ease-out;
+    }
 </style>
 """, unsafe_allow_html=True)
 
