@@ -783,7 +783,7 @@ with tab_feed:
                             <a href="{url}" target="_blank" class="claim-link">
                                 Claim Deal &nbsp;&rarr;
                             </a>
-                            <button onclick="(window.parent.copyDealUrl || window.copyDealUrl)(this, '{url}')" class="claim-link" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #e5e7eb !important; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-family: 'Inter', sans-serif;">
+                            <button onclick="var b=this,u='{url}';function ok(){{b.textContent='Copied!';setTimeout(function(){{b.textContent='Copy Link';}},2000);}}var t=document.createElement('textarea');t.value=u;t.style.cssText='position:fixed;left:-9999px;top:-9999px;';document.body.appendChild(t);t.focus();t.select();try{{document.execCommand('copy');ok();}}catch(e){{console.error(e);}}document.body.removeChild(t);" class="claim-link" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #e5e7eb !important; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-family: 'Inter', sans-serif;">
                                 Copy Link
                             </button>
                         </div>
