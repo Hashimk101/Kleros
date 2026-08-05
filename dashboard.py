@@ -154,17 +154,36 @@ st.markdown("""
         box-shadow: none !important;
     }
 
-    /* Deal Card Grid */
+    /* Deal Card Grid - Glassmorphism & Spotlight Hover */
     .deal-card {
-        background: #0d0e12;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 6px;
+        background: rgba(13, 14, 18, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
         padding: 1.25rem;
         margin-bottom: 1rem;
-        transition: border-color 0.15s ease;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .deal-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 0%), rgba(255, 255, 255, 0.08), transparent 40%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+    }
+    .deal-card:hover::before {
+        opacity: 1;
     }
     .deal-card:hover {
-        border-color: #374151;
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.18);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
     }
     .tag-mono {
         font-family: 'JetBrains Mono', monospace;
@@ -242,6 +261,23 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# Mouse-tracking Spotlight JS injection for parent DOM
+st.components.v1.html("""
+<script>
+const parentDoc = window.parent.document;
+parentDoc.addEventListener('mousemove', (e) => {
+    const cards = parentDoc.querySelectorAll('.deal-card');
+    cards.forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+    });
+});
+</script>
+""", height=0, width=0)
 
 
 @st.cache_resource
