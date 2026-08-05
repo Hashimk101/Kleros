@@ -447,8 +447,36 @@ function fixTabColors() {
     });
 }
 fixTabColors();
-setInterval(fixTabColors, 500);
-new MutationObserver(fixTabColors).observe(parentDoc.body, {childList: true, subtree: true, attributes: true});
+// Global helper for copying deal URLs
+window.parent.copyDealUrl = function(btn, linkUrl) {
+    function notifyCopied() {
+        btn.innerText = 'Copied!';
+        setTimeout(function() { btn.innerText = 'Copy Link'; }, 2000);
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(linkUrl).then(notifyCopied).catch(function() { fallback(linkUrl); });
+    } else {
+        fallback(linkUrl);
+    }
+    function fallback(text) {
+        var ta = parentDoc.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.top = '-9999px';
+        parentDoc.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+            parentDoc.execCommand('copy');
+            notifyCopied();
+        } catch (err) {
+            console.error('Copy failed', err);
+        }
+        parentDoc.body.removeChild(ta);
+    }
+};
+window.copyDealUrl = window.parent.copyDealUrl;
 </script>
 """, height=0, width=0)
 
@@ -755,36 +783,7 @@ with tab_feed:
                             <a href="{url}" target="_blank" class="claim-link">
                                 Claim Deal &nbsp;&rarr;
                             </a>
-                            <button onclick="
-                                var linkUrl = '{url}';
-                                var btn = this;
-                                function notifyCopied() {
-                                    btn.innerText = 'Copied!';
-                                    setTimeout(function() { btn.innerText = 'Copy Link'; }, 2000);
-                                }
-                                if (navigator.clipboard && window.isSecureContext) {
-                                    navigator.clipboard.writeText(linkUrl).then(notifyCopied).catch(function() { fallback(linkUrl); });
-                                } else {
-                                    fallback(linkUrl);
-                                }
-                                function fallback(text) {
-                                    var ta = document.createElement('textarea');
-                                    ta.value = text;
-                                    ta.style.position = 'fixed';
-                                    ta.style.left = '-9999px';
-                                    ta.style.top = '-9999px';
-                                    document.body.appendChild(ta);
-                                    ta.focus();
-                                    ta.select();
-                                    try {
-                                        document.execCommand('copy');
-                                        notifyCopied();
-                                    } catch (err) {
-                                        console.error('Copy failed', err);
-                                    }
-                                    document.body.removeChild(ta);
-                                }
-                            " class="claim-link" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #e5e7eb !important; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-family: 'Inter', sans-serif;">
+                            <button onclick="(window.parent.copyDealUrl || window.copyDealUrl)(this, '{url}')" class="claim-link" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #e5e7eb !important; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-family: 'Inter', sans-serif;">
                                 Copy Link
                             </button>
                         </div>
