@@ -470,6 +470,9 @@ if trigger_discovery:
         skeleton_area.empty()
         st.error(f"Execution error: {e}")
 
+# Fetch Stats
+stats = db.get_stats()
+
 # Dashboard Tabs Navigation
 tab_feed, tab_analytics, tab_log = st.tabs(["Live Feed", "Analytics", "Pipeline Log"])
 
