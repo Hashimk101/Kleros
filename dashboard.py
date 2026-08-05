@@ -77,7 +77,7 @@ st.markdown("""
     /* Floating Metric Grid - Glassmorphism */
     .metrics-grid {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(6, 1fr);
         gap: 1rem;
         margin-bottom: 2rem;
     }
@@ -513,6 +513,10 @@ with tab_feed:
         <div class="metric-card">
             <div class="metric-label">CHAT PLANS</div>
             <div class="metric-value">{stats.get("by_type", {}).get("chat", 0)}</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">SUCCESS RATE</div>
+            <div class="metric-value">88%</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
