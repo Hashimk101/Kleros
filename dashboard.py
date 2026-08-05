@@ -313,7 +313,7 @@ st.markdown("""
         border-color: #d4af37 !important;
     }
 
-    /* Ultra-High Contrast Tabs Override */
+    /* Tab Contrast — explicit colors, no opacity tricks */
     div[data-baseweb="tab-list"], div[data-testid="stTabs"] [role="tablist"] {
         background-color: transparent !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -325,24 +325,37 @@ st.markdown("""
         padding: 0.75rem 0.5rem !important;
         border: none !important;
         border-bottom: 2px solid transparent !important;
-        opacity: 0.9 !important;
+        opacity: 1 !important;
     }
-    button[data-baseweb="tab"] p, button[role="tab"] p, button[data-baseweb="tab"] span, button[role="tab"] span {
-        color: #ffffff !important; /* Pure White for inactive too, so it's impossible to miss */
+    /* Inactive tab text — bright, readable */
+    button[data-baseweb="tab"] p,
+    button[data-baseweb="tab"] span,
+    button[role="tab"] p,
+    button[role="tab"] span {
+        color: #c8ccd4 !important;
         font-family: 'Inter', sans-serif !important;
         font-size: 0.95rem !important;
         font-weight: 500 !important;
-        opacity: 0.8 !important; /* Dim the white slightly for inactive state */
-    }
-    button[data-baseweb="tab"]:hover p, button[role="tab"]:hover p {
         opacity: 1 !important;
-        color: #ffffff !important;
     }
-    button[data-baseweb="tab"][aria-selected="true"], button[role="tab"][aria-selected="true"] {
+    /* Hover */
+    button[data-baseweb="tab"]:hover p,
+    button[data-baseweb="tab"]:hover span,
+    button[role="tab"]:hover p,
+    button[role="tab"]:hover span {
+        color: #ffffff !important;
+        opacity: 1 !important;
+    }
+    /* Active tab */
+    button[data-baseweb="tab"][aria-selected="true"],
+    button[role="tab"][aria-selected="true"] {
         border-bottom: 2px solid #d4af37 !important;
         opacity: 1 !important;
     }
-    button[data-baseweb="tab"][aria-selected="true"] p, button[role="tab"][aria-selected="true"] p {
+    button[data-baseweb="tab"][aria-selected="true"] p,
+    button[data-baseweb="tab"][aria-selected="true"] span,
+    button[role="tab"][aria-selected="true"] p,
+    button[role="tab"][aria-selected="true"] span {
         color: #ffffff !important;
         font-weight: 600 !important;
         opacity: 1 !important;
