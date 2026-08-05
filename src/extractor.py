@@ -35,6 +35,7 @@ Return a JSON array of objects. Each object MUST include:
 - date_posted: (string or null) "YYYY-MM-DD" format if mentioned, otherwise null
 - source_type: (string) "official", "blog", "forum", or "social"
 - description: (string) Brief summary of how to claim the offer and what limits apply (e.g., "Access DeepSeek and Qwen models with generous free daily quotas via their API").
+- is_valid: (boolean) MUST be false if the page text indicates the offer is "deprecated", "no longer available", "sunset", "discontinued", or "ended". Otherwise true.
 
 CRITICAL: Return ONLY a valid JSON array. Do not include markdown code block backticks or extra text outside the JSON.
 """

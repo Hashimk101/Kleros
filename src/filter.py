@@ -57,6 +57,17 @@ class FilterEngine:
                 logger.info(f"Filter Engine rejected PAID deal: {name}")
                 return False
 
+        # 5. Check for explicit deprecation or LLM invalid flag
+        if offer.get("is_valid") is False:
+            logger.info(f"Filter Engine rejected DEPRECATED/SUNSET deal (flagged by LLM): {name}")
+            return False
+
+        value_desc = f"{offer.get('value', '')} {offer.get('description', '')}".lower()
+        sunset_keywords = ["deprecated", "no longer available", "sunset", "discontinued", "ended", "no longer active"]
+        if any(kw in value_desc for kw in sunset_keywords):
+            logger.info(f"Filter Engine rejected DEPRECATED deal (keyword match): {name}")
+            return False
+
         return True
 
     def is_within_recency_window(self, date_str: Any) -> bool:

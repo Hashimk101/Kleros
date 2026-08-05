@@ -101,6 +101,17 @@ Kleros supports automated, hands-free background collection via GitHub Actions w
 - Manual Workflow Dispatch: Supports on-demand execution via GitHub's `workflow_dispatch` trigger directly from the Actions tab.
 - Database Synchronization: Automatically commits and persists freshly discovered deals to the repository database, maintaining a constantly updated resource hub.
 
+## Data Integrity & Web Discovery Edge Cases
+
+While Kleros uses multi-layer filtering and LLM verification to detect active free tiers, automated web discovery may occasionally surface inactive deals due to external web realities:
+
+- Legacy Documentation: Providers frequently keep deprecated doc pages indexed on search engines even after retiring a free tier or feature.
+- Stale Landing Pages & Blogs: Companies often sunset promotional credit grants without removing the original announcement posts or updating marketing copy.
+- Mismatched Docs & Terms: API pricing or terms may be updated on portal dashboards while documentation mirrors remain unchanged.
+- Bot-Protected / Auth-Gated Pages: Sites protected by anti-bot screens or requiring user login may serve fallback HTML that lacks updated status details.
+
+To mitigate this, Kleros provides Visual Verification Badges (OFFICIAL vs SOURCE), Freshness Indicators, LLM deprecation detection during pipeline execution, and 30-day Automatic Database Purging.
+
 ## Prerequisites
 
 - Python 3.10 or higher
