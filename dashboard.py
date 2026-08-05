@@ -411,9 +411,14 @@ with col_action:
 
 with col_type_filter:
     st.markdown("<div class='section-header'>Filter Category</div>", unsafe_allow_html=True)
+    if "selected_type" not in st.session_state:
+        st.session_state["selected_type"] = "All"
+        
     selected_type = st.selectbox(
         "Filter Category",
         ["All", "API", "IDE", "Chat", "Student"],
+        key="selected_type_select",
+        index=["All", "API", "IDE", "Chat", "Student"].index(st.session_state.get("selected_type", "All")),
         label_visibility="collapsed"
     )
 
