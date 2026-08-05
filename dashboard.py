@@ -470,154 +470,179 @@ if trigger_discovery:
         skeleton_area.empty()
         st.error(f"Execution error: {e}")
 
-# Fetch Stats
-stats = db.get_stats()
+# Dashboard Tabs Navigation
+tab_feed, tab_analytics, tab_log = st.tabs(["Live Feed", "Analytics", "Pipeline Log"])
 
-# Swiss Minimalist Metrics Section
-st.markdown(f"""
-<div class="metrics-grid">
-    <div class="metric-card">
-        <div class="metric-label">TOTAL DEALS</div>
-        <div class="metric-value">{stats.get("total_offers", 0)}</div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-label">NEW TODAY</div>
-        <div class="metric-value">{stats.get("new_today", 0)}</div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-label">API CREDITS</div>
-        <div class="metric-value">{stats.get("by_type", {}).get("api", 0)}</div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-label">IDE CREDITS</div>
-        <div class="metric-value">{stats.get("by_type", {}).get("ide", 0)}</div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-label">CHAT PLANS</div>
-        <div class="metric-value">{stats.get("by_type", {}).get("chat", 0)}</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# Query Database
-offers = db.get_offers(
-    offer_type=selected_type if selected_type != "All" else None,
-    region=selected_region if selected_region != "All" else None,
-    is_valid_only=True
-)
-
-col_head, col_search_box, col_sort_box, col_exp = st.columns([1.5, 1.5, 1, 1])
-with col_head:
-    st.markdown(f"<div class='section-header' style='margin-top: 0.5rem;'>Verified Deals ({len(offers)})</div>", unsafe_allow_html=True)
-
-with col_search_box:
-    search_query = st.text_input("Search Deals", placeholder="Search by name, provider, keyword...", label_visibility="collapsed")
-
-with col_sort_box:
-    sort_by = st.selectbox("Sort By", ["Newest First", "Name A-Z"], label_visibility="collapsed")
-
-with col_exp:
-    if offers:
-        df = pd.DataFrame(offers)
-        csv_data = df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="Export CSV",
-            data=csv_data,
-            file_name="kleros_verified_deals.csv",
-            mime="text/csv",
-            use_container_width=True
-        )
-
-# Quick Filter Chips
-col_c1, col_c2, col_c3, _ = st.columns([1, 1, 1.2, 1.8])
-with col_c1:
-    chip_global = st.checkbox("🌍 Global Only", key="chip_global_key")
-with col_c2:
-    chip_today = st.checkbox("🆕 Added Today", key="chip_today_key")
-with col_c3:
-    chip_high = st.checkbox("💎 High Value", key="chip_high_key")
-
-# Apply inline text search filtering
-if search_query:
-    q = search_query.strip().lower()
-    offers = [
-        o for o in offers
-        if q in (o.get("name") or "").lower() or q in (o.get("description") or "").lower() or q in (o.get("value") or "").lower()
-    ]
-
-# Apply chip filters
-if chip_global:
-    offers = [o for o in offers if "global" in [str(r).lower() for r in o.get("eligible_regions", ["global"])]]
-
-if chip_today:
-    from datetime import datetime, timezone
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    offers = [o for o in offers if o.get("date_posted") == today_str]
-
-if chip_high:
-    offers = [
-        o for o in offers
-        if any(w in (o.get("value") or "").lower() for w in ["$50", "$100", "$200", "$500", "1 year", "pro free", "unlimited", "1m context"])
-    ]
-
-# Apply sorting
-if sort_by == "Name A-Z":
-    offers = sorted(offers, key=lambda x: (x.get("name") or "").lower())
-elif sort_by == "Newest First":
-    offers = sorted(offers, key=lambda x: str(x.get("date_posted") or "0000-00-00"), reverse=True)
-
-if not offers:
-    cat_lbl = selected_type if selected_type != "All" else ""
-    reg_lbl = selected_region if selected_region != "All" else ""
-    
-    if cat_lbl and reg_lbl:
-        context_msg = f"No {cat_lbl.lower()} deals found in {reg_lbl}. Try broadening your region filter to 'Global' or category to 'All'."
-    elif cat_lbl:
-        context_msg = f"No {cat_lbl.lower()} deals found in database. Click 'Discover Free Deals' above to run autonomous search."
-    elif reg_lbl:
-        context_msg = f"No deals found for region {reg_lbl}. Try broadening to 'Global' or 'All'."
-    else:
-        context_msg = "No deals recorded yet. Click 'Discover Free Deals' above to run the autonomous pipeline."
-
+with tab_feed:
+    # Swiss Minimalist Metrics Section
     st.markdown(f"""
-    <div style="background: rgba(13, 14, 18, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 3rem 1.5rem; text-align: center; margin-top: 1rem; margin-bottom: 2rem;">
-        <div style="margin-bottom: 1rem;">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b9bb4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block;">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-label">TOTAL DEALS</div>
+            <div class="metric-value">{stats.get("total_offers", 0)}</div>
         </div>
-        <div style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 600; color: #fafafa; margin-bottom: 0.4rem;">No deals discovered</div>
-        <div style="color: #8b9bb4; font-size: 0.875rem; max-width: 480px; margin: 0 auto; line-height: 1.5;">{context_msg}</div>
+        <div class="metric-card">
+            <div class="metric-label">NEW TODAY</div>
+            <div class="metric-value">{stats.get("new_today", 0)}</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">API CREDITS</div>
+            <div class="metric-value">{stats.get("by_type", {}).get("api", 0)}</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">IDE CREDITS</div>
+            <div class="metric-value">{stats.get("by_type", {}).get("ide", 0)}</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">CHAT PLANS</div>
+            <div class="metric-value">{stats.get("by_type", {}).get("chat", 0)}</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
-else:
-    col_left, col_right = st.columns(2)
-    for idx, offer in enumerate(offers):
-        target_col = col_left if idx % 2 == 0 else col_right
-        with target_col:
-            off_type = offer.get("offer_type", "api").lower()
-            badge_cls = f"tag-{off_type}" if off_type in ["api", "ide", "chat", "student"] else "tag-api"
 
-            regions = offer.get("eligible_regions", ["global"])
-            is_us = ("us" in regions or "usa" in regions) and len(regions) == 1
-            geo_cls = "tag-us" if is_us else "tag-geo"
-            geo_lbl = "US-ONLY" if is_us else ", ".join(regions).upper()
+    # Query Database
+    offers = db.get_offers(
+        offer_type=selected_type if selected_type != "All" else None,
+        region=selected_region if selected_region != "All" else None,
+        is_valid_only=True
+    )
 
-            st.markdown(f"""
-            <div class="deal-card animate-fade-up" style="animation-delay: {idx * 0.05}s;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span class="tag-mono {badge_cls}">{off_type.upper()}</span>
-                        <span class="tag-mono {geo_cls}">{geo_lbl}</span>
-                    </div>
-                    <span style="color: #8b9bb4; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;">{offer.get('date_posted') or 'VERIFIED'}</span>
-                </div>
-                <div class="deal-title">{offer.get('name')}</div>
-                <div class="deal-value">{offer.get('value') or 'Free Credit / Discount'}</div>
-                <div class="deal-desc">{offer.get('description') or 'No description provided.'}</div>
-                <a href="{offer.get('url')}" target="_blank" class="claim-link">
-                    Claim Deal &nbsp;&rarr;
-                </a>
+    col_head, col_search_box, col_sort_box, col_exp = st.columns([1.5, 1.5, 1, 1])
+    with col_head:
+        st.markdown(f"<div class='section-header' style='margin-top: 0.5rem;'>Verified Deals ({len(offers)})</div>", unsafe_allow_html=True)
+
+    with col_search_box:
+        search_query = st.text_input("Search Deals", placeholder="Search by name, provider, keyword...", label_visibility="collapsed")
+
+    with col_sort_box:
+        sort_by = st.selectbox("Sort By", ["Newest First", "Name A-Z"], label_visibility="collapsed")
+
+    with col_exp:
+        if offers:
+            df = pd.DataFrame(offers)
+            csv_data = df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="Export CSV",
+                data=csv_data,
+                file_name="kleros_verified_deals.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+
+    # Quick Filter Chips
+    col_c1, col_c2, col_c3, _ = st.columns([1, 1, 1.2, 1.8])
+    with col_c1:
+        chip_global = st.checkbox("🌍 Global Only", key="chip_global_key")
+    with col_c2:
+        chip_today = st.checkbox("🆕 Added Today", key="chip_today_key")
+    with col_c3:
+        chip_high = st.checkbox("💎 High Value", key="chip_high_key")
+
+    # Apply inline text search filtering
+    if search_query:
+        q = search_query.strip().lower()
+        offers = [
+            o for o in offers
+            if q in (o.get("name") or "").lower() or q in (o.get("description") or "").lower() or q in (o.get("value") or "").lower()
+        ]
+
+    # Apply chip filters
+    if chip_global:
+        offers = [o for o in offers if "global" in [str(r).lower() for r in o.get("eligible_regions", ["global"])]]
+
+    if chip_today:
+        from datetime import datetime, timezone
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        offers = [o for o in offers if o.get("date_posted") == today_str]
+
+    if chip_high:
+        offers = [
+            o for o in offers
+            if any(w in (o.get("value") or "").lower() for w in ["$50", "$100", "$200", "$500", "1 year", "pro free", "unlimited", "1m context"])
+        ]
+
+    # Apply sorting
+    if sort_by == "Name A-Z":
+        offers = sorted(offers, key=lambda x: (x.get("name") or "").lower())
+    elif sort_by == "Newest First":
+        offers = sorted(offers, key=lambda x: str(x.get("date_posted") or "0000-00-00"), reverse=True)
+
+    if not offers:
+        cat_lbl = selected_type if selected_type != "All" else ""
+        reg_lbl = selected_region if selected_region != "All" else ""
+        
+        if cat_lbl and reg_lbl:
+            context_msg = f"No {cat_lbl.lower()} deals found in {reg_lbl}. Try broadening your region filter to 'Global' or category to 'All'."
+        elif cat_lbl:
+            context_msg = f"No {cat_lbl.lower()} deals found in database. Click 'Discover Free Deals' above to run autonomous search."
+        elif reg_lbl:
+            context_msg = f"No deals found for region {reg_lbl}. Try broadening to 'Global' or 'All'."
+        else:
+            context_msg = "No deals recorded yet. Click 'Discover Free Deals' above to run the autonomous pipeline."
+
+        st.markdown(f"""
+        <div style="background: rgba(13, 14, 18, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 3rem 1.5rem; text-align: center; margin-top: 1rem; margin-bottom: 2rem;">
+            <div style="margin-bottom: 1rem;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b9bb4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block;">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
             </div>
-            """, unsafe_allow_html=True)
+            <div style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 600; color: #fafafa; margin-bottom: 0.4rem;">No deals discovered</div>
+            <div style="color: #8b9bb4; font-size: 0.875rem; max-width: 480px; margin: 0 auto; line-height: 1.5;">{context_msg}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        col_left, col_right = st.columns(2)
+        for idx, offer in enumerate(offers):
+            target_col = col_left if idx % 2 == 0 else col_right
+            with target_col:
+                off_type = offer.get("offer_type", "api").lower()
+                badge_cls = f"tag-{off_type}" if off_type in ["api", "ide", "chat", "student"] else "tag-api"
+
+                regions = offer.get("eligible_regions", ["global"])
+                is_us = ("us" in regions or "usa" in regions) and len(regions) == 1
+                geo_cls = "tag-us" if is_us else "tag-geo"
+                geo_lbl = "US-ONLY" if is_us else ", ".join(regions).upper()
+
+                st.markdown(f"""
+                <div class="deal-card animate-fade-up" style="animation-delay: {idx * 0.05}s;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span class="tag-mono {badge_cls}">{off_type.upper()}</span>
+                            <span class="tag-mono {geo_cls}">{geo_lbl}</span>
+                        </div>
+                        <span style="color: #8b9bb4; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;">{offer.get('date_posted') or 'VERIFIED'}</span>
+                    </div>
+                    <div class="deal-title">{offer.get('name')}</div>
+                    <div class="deal-value">{offer.get('value') or 'Free Credit / Discount'}</div>
+                    <div class="deal-desc">{offer.get('description') or 'No description provided.'}</div>
+                    <a href="{offer.get('url')}" target="_blank" class="claim-link">
+                        Claim Deal &nbsp;&rarr;
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
+
+with tab_analytics:
+    st.markdown("<div class='section-header' style='margin-top: 0.5rem;'>Discovery Analytics & Trends</div>", unsafe_allow_html=True)
+    by_type = stats.get("by_type", {})
+    if by_type:
+        type_df = pd.DataFrame(list(by_type.items()), columns=["Category", "Count"])
+        col_ch1, col_ch2 = st.columns(2)
+        with col_ch1:
+            st.markdown("<div style='font-size: 0.85rem; color: #8b9bb4; margin-bottom: 0.5rem;'>Offers Count by Category</div>", unsafe_allow_html=True)
+            st.bar_chart(type_df.set_index("Category"))
+        with col_ch2:
+            st.markdown("<div style='font-size: 0.85rem; color: #8b9bb4; margin-bottom: 0.5rem;'>Category Breakdown Table</div>", unsafe_allow_html=True)
+            st.dataframe(type_df, use_container_width=True)
+    else:
+        st.info("No analytics data recorded yet. Run a discovery run to populate metrics.")
+
+with tab_log:
+    st.markdown("<div class='section-header' style='margin-top: 0.5rem;'>Pipeline Run Log History</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="terminal-box">
+        [$] SYSTEM INITIALIZED - Kleros Discovery Agent Ready.<br>
+        [$] PIPELINE LOGS ARE STORED IN MEMORY AND UPDATED REAL-TIME DURING DISCOVERY.
+    </div>
+    """, unsafe_allow_html=True)
