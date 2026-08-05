@@ -313,39 +313,42 @@ st.markdown("""
         border-color: #d4af37 !important;
     }
 
-    /* Custom Streamlit Tabs Override - High Contrast */
-    div[data-baseweb="tab-list"] {
+    /* Ultra-High Contrast Tabs Override */
+    div[data-baseweb="tab-list"], div[data-testid="stTabs"] [role="tablist"] {
         background-color: transparent !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
         gap: 1.5rem !important;
         margin-bottom: 1.5rem !important;
     }
-    button[data-baseweb="tab"] {
+    button[data-baseweb="tab"], button[role="tab"], div[data-testid="stTabs"] button {
         background-color: transparent !important;
-        color: #9ca3af !important;
+        color: #e5e7eb !important; /* Bright White-Gray */
         font-family: 'Inter', sans-serif !important;
         font-size: 0.95rem !important;
         font-weight: 500 !important;
         padding: 0.75rem 0.5rem !important;
         border: none !important;
         border-bottom: 2px solid transparent !important;
+        opacity: 0.9 !important;
     }
-    button[data-baseweb="tab"] * {
-        color: #9ca3af !important;
+    button[data-baseweb="tab"] *, button[role="tab"] *, div[data-testid="stTabs"] button * {
+        color: #e5e7eb !important; /* Bright White-Gray */
         font-weight: 500 !important;
     }
-    button[data-baseweb="tab"]:hover {
-        color: #e5e7eb !important;
+    button[data-baseweb="tab"]:hover, button[role="tab"]:hover {
+        color: #ffffff !important;
+        opacity: 1 !important;
     }
-    button[data-baseweb="tab"]:hover * {
-        color: #e5e7eb !important;
+    button[data-baseweb="tab"]:hover *, button[role="tab"]:hover * {
+        color: #ffffff !important;
     }
-    button[data-baseweb="tab"][aria-selected="true"] {
+    button[data-baseweb="tab"][aria-selected="true"], button[role="tab"][aria-selected="true"] {
         color: #ffffff !important;
         border-bottom: 2px solid #d4af37 !important;
         font-weight: 600 !important;
+        opacity: 1 !important;
     }
-    button[data-baseweb="tab"][aria-selected="true"] * {
+    button[data-baseweb="tab"][aria-selected="true"] *, button[role="tab"][aria-selected="true"] * {
         color: #ffffff !important;
         font-weight: 600 !important;
     }
