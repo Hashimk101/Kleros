@@ -46,14 +46,19 @@ st.markdown("""
         max-width: 1200px;
     }
 
-    /* Header Bar */
+    /* Header Bar - Frosted Glass */
     .brand-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 1.25rem 1.5rem;
+        background: rgba(13, 14, 18, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
         margin-bottom: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
     .brand-title {
         font-family: 'Playfair Display', serif;
@@ -69,7 +74,7 @@ st.markdown("""
         margin-top: 0.25rem;
     }
 
-    /* Minimal Metric Grid */
+    /* Floating Metric Grid - Glassmorphism */
     .metrics-grid {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
@@ -77,11 +82,20 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     .metric-card {
-        background: #0d0e12;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 6px;
-        padding: 1rem;
+        background: rgba(13, 14, 18, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 1.1rem;
         text-align: left;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
     }
     .metric-label {
         font-size: 0.75rem;
