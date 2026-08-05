@@ -110,6 +110,7 @@ st.markdown("""
         font-weight: 500;
         color: #d4af37; /* Champagne Gold */
         font-family: 'Playfair Display', serif;
+        font-variant-numeric: tabular-nums;
     }
 
     /* Premium Streamlit Button Override */
@@ -222,8 +223,9 @@ st.markdown("""
     }
     .deal-desc {
         font-family: 'Inter', sans-serif;
-        color: #8b9bb4; /* Cool Slate */
+        color: #9ca3af; /* Refined Muted Gray */
         font-size: 0.8125rem;
+        font-weight: 400;
         line-height: 1.6;
         margin-bottom: 1rem;
     }
@@ -254,6 +256,7 @@ st.markdown("""
         font-family: 'JetBrains Mono', monospace;
         font-variant-numeric: tabular-nums;
         font-size: 0.78rem;
+        font-weight: 400;
         color: #d4af37; /* Champagne Gold */
         text-shadow: 0 0 10px rgba(212,175,55,0.3);
         box-shadow: 0 0 20px rgba(212,175,55,0.05); /* Faint amber glow */
@@ -401,7 +404,7 @@ offers = db.get_offers(
 
 col_head, col_exp = st.columns([3, 1])
 with col_head:
-    st.markdown(f"<h3 style='font-size: 1.1rem; font-weight: 600; color: #ffffff;'>Verified Deals ({len(offers)})</h3>", unsafe_allow_html=True)
+    st.markdown(f"<div class='section-header' style='margin-top: 0.5rem;'>Verified Deals ({len(offers)})</div>", unsafe_allow_html=True)
 
 with col_exp:
     if offers:
@@ -437,7 +440,7 @@ else:
                         <span class="tag-mono {badge_cls}">{off_type.upper()}</span>
                         <span class="tag-mono {geo_cls}">{geo_lbl}</span>
                     </div>
-                    <span style="color: #6f747c; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;">{offer.get('date_posted') or 'VERIFIED'}</span>
+                    <span style="color: #8b9bb4; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;">{offer.get('date_posted') or 'VERIFIED'}</span>
                 </div>
                 <div class="deal-title">{offer.get('name')}</div>
                 <div class="deal-value">{offer.get('value') or 'Free Credit / Discount'}</div>
