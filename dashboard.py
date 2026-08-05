@@ -367,11 +367,31 @@ st.markdown("<div style='margin-bottom: 1.5rem;'></div>", unsafe_allow_html=True
 
 # Run Autonomous Discovery Pipeline
 if trigger_discovery:
-    st.markdown("### Discovery Pipeline Status")
-    progress_bar = st.progress(0.0)
+    st.session_state["cancelled"] = False
+    st.markdown("<div class='section-header' style='margin-top: 1rem;'>Discovery Pipeline Status</div>", unsafe_allow_html=True)
+    col_prog, col_cancel = st.columns([4, 1])
+    with col_prog:
+        progress_bar = st.progress(0.0)
+    with col_cancel:
+        if st.button("Cancel Pipeline", key="cancel_btn", use_container_width=True):
+            st.session_state["cancelled"] = True
+
     log_area = st.empty()
+    skeleton_area = st.empty()
+
+    # Render skeleton loading grid during pipeline run
+    skeleton_area.markdown("""
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; margin-bottom: 1.5rem;">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+    </div>
+    """, unsafe_allow_html=True)
 
     def update_progress(step: str, msg: str, pct: float):
+        if st.session_state.get("cancelled"):
+            raise InterruptedError("Pipeline aborted by user.")
         progress_bar.progress(pct)
         log_area.markdown(f"""
         <div class="terminal-box">
@@ -388,13 +408,18 @@ if trigger_discovery:
             max_pages=5,
             progress_callback=update_progress
         )
+        skeleton_area.empty()
         valid_cnt = result.get("valid_offers_count", 0)
         new_cnt = result.get("new_offers_count", 0)
         if valid_cnt > 0:
             st.success(f"Discovery Complete. Discovered {valid_cnt} offers ({new_cnt} new saved).")
         else:
             st.info(f"Discovery Complete. Pipeline processed 0 new offers for category '{selected_type}'.")
+    except InterruptedError:
+        skeleton_area.empty()
+        st.warning("Discovery pipeline was cancelled by user.")
     except Exception as e:
+        skeleton_area.empty()
         st.error(f"Execution error: {e}")
 
 # Fetch Stats
