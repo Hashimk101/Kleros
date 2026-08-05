@@ -473,9 +473,15 @@ offers = db.get_offers(
     is_valid_only=True
 )
 
-col_head, col_exp = st.columns([3, 1])
+col_head, col_search_box, col_sort_box, col_exp = st.columns([1.5, 1.5, 1, 1])
 with col_head:
     st.markdown(f"<div class='section-header' style='margin-top: 0.5rem;'>Verified Deals ({len(offers)})</div>", unsafe_allow_html=True)
+
+with col_search_box:
+    search_query = st.text_input("Search Deals", placeholder="Search by name, provider, keyword...", label_visibility="collapsed")
+
+with col_sort_box:
+    sort_by = st.selectbox("Sort By", ["Newest First", "Name A-Z"], label_visibility="collapsed")
 
 with col_exp:
     if offers:
@@ -488,6 +494,20 @@ with col_exp:
             mime="text/csv",
             use_container_width=True
         )
+
+# Apply inline text search filtering
+if search_query:
+    q = search_query.strip().lower()
+    offers = [
+        o for o in offers
+        if q in (o.get("name") or "").lower() or q in (o.get("description") or "").lower() or q in (o.get("value") or "").lower()
+    ]
+
+# Apply sorting
+if sort_by == "Name A-Z":
+    offers = sorted(offers, key=lambda x: (x.get("name") or "").lower())
+elif sort_by == "Newest First":
+    offers = sorted(offers, key=lambda x: str(x.get("date_posted") or "0000-00-00"), reverse=True)
 
 if not offers:
     cat_lbl = selected_type if selected_type != "All" else ""
