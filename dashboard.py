@@ -312,6 +312,29 @@ st.markdown("""
         background-color: #d4af37 !important;
         border-color: #d4af37 !important;
     }
+
+    /* Custom Streamlit Tabs Override */
+    div[data-baseweb="tab-list"] {
+        background-color: transparent !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        gap: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    button[data-baseweb="tab"] {
+        background-color: transparent !important;
+        color: #8b9bb4 !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
+        padding: 0.75rem 0.5rem !important;
+        border: none !important;
+        border-bottom: 2px solid transparent !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #fafafa !important;
+        border-bottom: 2px solid #d4af37 !important;
+        font-weight: 600 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
