@@ -340,6 +340,21 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Dismissible Onboarding Banner for first-time users
+if "dismissed_onboarding" not in st.session_state:
+    st.session_state["dismissed_onboarding"] = False
+
+stats_initial = db.get_stats()
+if stats_initial.get("total_offers", 0) == 0 and not st.session_state["dismissed_onboarding"]:
+    st.markdown("""
+    <div style="background: rgba(212, 175, 55, 0.05); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div style="color: #d4af37; font-weight: 600; font-size: 0.95rem; font-family: 'Inter', sans-serif;">Welcome to Kleros</div>
+            <div style="color: #8b9bb4; font-size: 0.83rem; margin-top: 0.2rem;">This autonomous agent hunts for free LLM API credits, student IDE subscriptions, and chat deals so you don't have to.</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 # Top Action Toolbar (No query text box needed!)
 col_action, col_type_filter, col_reg_filter = st.columns([1.5, 1, 1])
 
