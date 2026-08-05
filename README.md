@@ -70,6 +70,14 @@ Cards also display a geographic availability tag:
 - Global: The offer is available to users worldwide with no known country restrictions.
 - US Only / EU Only / etc.: The offer is geographically restricted. Eligibility may vary.
 
+### Live Pipeline Status and Control
+
+When triggering "Discover Free Deals", the UI displays real-time operational feedback:
+
+- Progress Bar: Visual status bar reflecting step progress from 0% to 100%.
+- Terminal Log Output: Real-time terminal output box displaying execution steps (e.g., `[$] STEP [SEARCH] - Running dual-search for APIs and IDEs...`).
+- Pipeline Cancellation: A dedicated "Cancel Pipeline" button allowing operators to cleanly interrupt and terminate active discovery runs at any point without corrupting database integrity.
+
 ### Filters and Search
 
 - Inline Search: The search bar filters deals in real time by name, provider, or keyword.
@@ -80,6 +88,14 @@ Cards also display a geographic availability tag:
   - Global Only: Shows only deals with no geographic restrictions.
   - Added Today: Shows only deals discovered in the current calendar day.
   - High Value: Shows deals that offer particularly high credit amounts or long subscription durations.
+
+## Automated Scheduled Collection (GitHub Actions)
+
+Kleros supports automated, hands-free background collection via GitHub Actions workflows (`collector.yml`):
+
+- Scheduled Execution: Runs automatically on a periodic cron schedule to continuously search, extract, filter, and store new AI deals without manual intervention.
+- Manual Workflow Dispatch: Supports on-demand execution via GitHub's `workflow_dispatch` trigger directly from the Actions tab.
+- Database Synchronization: Automatically commits and persists freshly discovered deals to the repository database, maintaining a constantly updated resource hub.
 
 ## Prerequisites
 
