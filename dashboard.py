@@ -313,7 +313,7 @@ st.markdown("""
         border-color: #d4af37 !important;
     }
 
-    /* Custom Streamlit Tabs Override */
+    /* Custom Streamlit Tabs Override - High Contrast */
     div[data-baseweb="tab-list"] {
         background-color: transparent !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -322,17 +322,31 @@ st.markdown("""
     }
     button[data-baseweb="tab"] {
         background-color: transparent !important;
-        color: #8b9bb4 !important;
+        color: #9ca3af !important;
         font-family: 'Inter', sans-serif !important;
-        font-size: 0.9rem !important;
+        font-size: 0.95rem !important;
         font-weight: 500 !important;
         padding: 0.75rem 0.5rem !important;
         border: none !important;
         border-bottom: 2px solid transparent !important;
     }
+    button[data-baseweb="tab"] * {
+        color: #9ca3af !important;
+        font-weight: 500 !important;
+    }
+    button[data-baseweb="tab"]:hover {
+        color: #e5e7eb !important;
+    }
+    button[data-baseweb="tab"]:hover * {
+        color: #e5e7eb !important;
+    }
     button[data-baseweb="tab"][aria-selected="true"] {
-        color: #fafafa !important;
+        color: #ffffff !important;
         border-bottom: 2px solid #d4af37 !important;
+        font-weight: 600 !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] * {
+        color: #ffffff !important;
         font-weight: 600 !important;
     }
 </style>
@@ -598,33 +612,58 @@ with tab_feed:
     else:
         col_left, col_right = st.columns(2)
         for idx, offer in enumerate(offers):
-            target_col = col_left if idx % 2 == 0 else col_right
-            with target_col:
-                off_type = offer.get("offer_type", "api").lower()
-                badge_cls = f"tag-{off_type}" if off_type in ["api", "ide", "chat", "student"] else "tag-api"
+                target_col = col_left if idx % 2 == 0 else col_right
+                with target_col:
+                    off_type = offer.get("offer_type", "api").lower()
+                    badge_cls = f"tag-{off_type}" if off_type in ["api", "ide", "chat", "student"] else "tag-api"
 
-                regions = offer.get("eligible_regions", ["global"])
-                is_us = ("us" in regions or "usa" in regions) and len(regions) == 1
-                geo_cls = "tag-us" if is_us else "tag-geo"
-                geo_lbl = "US-ONLY" if is_us else ", ".join(regions).upper()
+                    regions = offer.get("eligible_regions", ["global"])
+                    is_us = ("us" in regions or "usa" in regions) and len(regions) == 1
+                    geo_cls = "tag-us" if is_us else "tag-geo"
+                    geo_lbl = "US-ONLY" if is_us else ", ".join(regions).upper()
 
-                st.markdown(f"""
-                <div class="deal-card animate-fade-up" style="animation-delay: {idx * 0.05}s;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span class="tag-mono {badge_cls}">{off_type.upper()}</span>
-                            <span class="tag-mono {geo_cls}">{geo_lbl}</span>
+                    # Prompt 8: Freshness Dot & Verification Badge
+                    date_posted = offer.get("date_posted")
+                    url = offer.get("url", "")
+                    
+                    # Compute Freshness Dot
+                    fresh_dot = "🟢"
+                    if date_posted:
+                        try:
+                            from datetime import datetime, timezone
+                            posted_dt = datetime.strptime(date_posted.strip(), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                            days_old = (datetime.now(timezone.utc) - posted_dt).days
+                            if days_old <= 7:
+                                fresh_dot = "🟢"
+                            elif days_old <= 30:
+                                fresh_dot = "🟡"
+                            else:
+                                fresh_dot = "🔴"
+                        except Exception:
+                            fresh_dot = "🟢"
+
+                    # Verification Badge
+                    is_verified = any(k in url.lower() for k in ["google", "openai", "nvidia", "zed.dev", "anthropic", "github", "mistral", "groq", "cloudflare", "cohere", "sambanova", "siliconflow", "vercel", "kilo.ai"])
+                    verify_badge = '<span class="tag-mono" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3);">✓ OFFICIAL</span>' if is_verified else '<span class="tag-mono" style="background: rgba(255, 255, 255, 0.05); color: #8b9bb4; border: 1px solid rgba(255, 255, 255, 0.1);">~ SOURCE</span>'
+
+                    st.markdown(f"""
+                    <div class="deal-card animate-fade-up" style="animation-delay: {idx * 0.05}s;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span class="tag-mono {badge_cls}">{off_type.upper()}</span>
+                                <span class="tag-mono {geo_cls}">{geo_lbl}</span>
+                                {verify_badge}
+                            </div>
+                            <span style="color: #8b9bb4; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;">{fresh_dot} {date_posted or 'VERIFIED'}</span>
                         </div>
-                        <span style="color: #8b9bb4; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;">{offer.get('date_posted') or 'VERIFIED'}</span>
+                        <div class="deal-title">{offer.get('name')}</div>
+                        <div class="deal-value">{offer.get('value') or 'Free Credit / Discount'}</div>
+                        <div class="deal-desc">{offer.get('description') or 'No description provided.'}</div>
+                        <a href="{offer.get('url')}" target="_blank" class="claim-link">
+                            Claim Deal &nbsp;&rarr;
+                        </a>
                     </div>
-                    <div class="deal-title">{offer.get('name')}</div>
-                    <div class="deal-value">{offer.get('value') or 'Free Credit / Discount'}</div>
-                    <div class="deal-desc">{offer.get('description') or 'No description provided.'}</div>
-                    <a href="{offer.get('url')}" target="_blank" class="claim-link">
-                        Claim Deal &nbsp;&rarr;
-                    </a>
-                </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
 
 with tab_analytics:
     st.markdown("<div class='section-header' style='margin-top: 0.5rem;'>Discovery Analytics & Trends</div>", unsafe_allow_html=True)
