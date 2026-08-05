@@ -431,6 +431,24 @@ parentDoc.addEventListener('mousemove', (e) => {
         card.style.setProperty('--mouse-y', `${y}px`);
     });
 });
+
+// Force tab text to white — CSS cannot override Streamlit's inline styles
+function fixTabColors() {
+    const tabs = parentDoc.querySelectorAll('button[role="tab"], button[data-baseweb="tab"]');
+    tabs.forEach(tab => {
+        const isActive = tab.getAttribute('aria-selected') === 'true';
+        tab.style.setProperty('opacity', '1', 'important');
+        const allText = tab.querySelectorAll('p, span, div');
+        allText.forEach(el => {
+            el.style.setProperty('color', '#ffffff', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+        });
+        tab.style.setProperty('color', '#ffffff', 'important');
+    });
+}
+fixTabColors();
+setInterval(fixTabColors, 500);
+new MutationObserver(fixTabColors).observe(parentDoc.body, {childList: true, subtree: true, attributes: true});
 </script>
 """, height=0, width=0)
 
