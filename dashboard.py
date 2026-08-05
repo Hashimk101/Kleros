@@ -370,6 +370,26 @@ st.markdown("""
     .completion-flash {
         animation: goldFlash 1.5s ease-out;
     }
+    /* Responsive Media Queries */
+    @media (max-width: 992px) {
+        .metrics-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+        }
+    }
+    @media (max-width: 768px) {
+        .metrics-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .main .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+    }
+    @media (max-width: 480px) {
+        .metrics-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
