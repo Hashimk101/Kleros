@@ -320,37 +320,32 @@ st.markdown("""
         gap: 1.5rem !important;
         margin-bottom: 1.5rem !important;
     }
-    button[data-baseweb="tab"], button[role="tab"], div[data-testid="stTabs"] button {
+    button[data-baseweb="tab"], button[role="tab"] {
         background-color: transparent !important;
-        color: #e5e7eb !important; /* Bright White-Gray */
-        font-family: 'Inter', sans-serif !important;
-        font-size: 0.95rem !important;
-        font-weight: 500 !important;
         padding: 0.75rem 0.5rem !important;
         border: none !important;
         border-bottom: 2px solid transparent !important;
         opacity: 0.9 !important;
     }
-    button[data-baseweb="tab"] *, button[role="tab"] *, div[data-testid="stTabs"] button * {
-        color: #e5e7eb !important; /* Bright White-Gray */
+    button[data-baseweb="tab"] p, button[role="tab"] p, button[data-baseweb="tab"] span, button[role="tab"] span {
+        color: #ffffff !important; /* Pure White for inactive too, so it's impossible to miss */
+        font-family: 'Inter', sans-serif !important;
+        font-size: 0.95rem !important;
         font-weight: 500 !important;
+        opacity: 0.8 !important; /* Dim the white slightly for inactive state */
     }
-    button[data-baseweb="tab"]:hover, button[role="tab"]:hover {
-        color: #ffffff !important;
+    button[data-baseweb="tab"]:hover p, button[role="tab"]:hover p {
         opacity: 1 !important;
-    }
-    button[data-baseweb="tab"]:hover *, button[role="tab"]:hover * {
         color: #ffffff !important;
     }
     button[data-baseweb="tab"][aria-selected="true"], button[role="tab"][aria-selected="true"] {
-        color: #ffffff !important;
         border-bottom: 2px solid #d4af37 !important;
-        font-weight: 600 !important;
         opacity: 1 !important;
     }
-    button[data-baseweb="tab"][aria-selected="true"] *, button[role="tab"][aria-selected="true"] * {
+    button[data-baseweb="tab"][aria-selected="true"] p, button[role="tab"][aria-selected="true"] p {
         color: #ffffff !important;
         font-weight: 600 !important;
+        opacity: 1 !important;
     }
     /* Discovery Mode Animations */
     @keyframes brandPulse {
@@ -615,11 +610,11 @@ with tab_feed:
     # Quick Filter Chips
     col_c1, col_c2, col_c3, _ = st.columns([1, 1, 1.2, 1.8])
     with col_c1:
-        chip_global = st.checkbox("🌍 Global Only", key="chip_global_key")
+        chip_global = st.checkbox("Global Only", key="chip_global_key")
     with col_c2:
-        chip_today = st.checkbox("🆕 Added Today", key="chip_today_key")
+        chip_today = st.checkbox("Added Today", key="chip_today_key")
     with col_c3:
-        chip_high = st.checkbox("💎 High Value", key="chip_high_key")
+        chip_high = st.checkbox("High Value", key="chip_high_key")
 
     # Apply inline text search filtering
     if search_query:
@@ -693,20 +688,20 @@ with tab_feed:
                     url = offer.get("url", "")
                     
                     # Compute Freshness Dot
-                    fresh_dot = "🟢"
+                    fresh_dot = "<span style='color: #10b981;'>●</span>"
                     if date_posted:
                         try:
                             from datetime import datetime, timezone
                             posted_dt = datetime.strptime(date_posted.strip(), "%Y-%m-%d").replace(tzinfo=timezone.utc)
                             days_old = (datetime.now(timezone.utc) - posted_dt).days
                             if days_old <= 7:
-                                fresh_dot = "🟢"
+                                fresh_dot = "<span style='color: #10b981;'>●</span>"
                             elif days_old <= 30:
-                                fresh_dot = "🟡"
+                                fresh_dot = "<span style='color: #eab308;'>●</span>"
                             else:
-                                fresh_dot = "🔴"
+                                fresh_dot = "<span style='color: #ef4444;'>●</span>"
                         except Exception:
-                            fresh_dot = "🟢"
+                            fresh_dot = "<span style='color: #10b981;'>●</span>"
 
                     # Verification Badge
                     is_verified = any(k in url.lower() for k in ["google", "openai", "nvidia", "zed.dev", "anthropic", "github", "mistral", "groq", "cloudflare", "cohere", "sambanova", "siliconflow", "vercel", "kilo.ai"])
