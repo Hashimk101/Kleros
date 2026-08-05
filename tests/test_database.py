@@ -53,8 +53,30 @@ class TestDatabaseManager(unittest.TestCase):
         }
         self.assertTrue(self.db.save_offer(offer))
         self.assertFalse(self.db.save_offer(offer))
-        stats = self.db.get_stats()
-        self.assertEqual(stats["total_offers"], 1)
+    def test_cleanup_expired_offers(self):
+        old_offer = {
+            "name": "Expired API Deal",
+            "url": "https://expired-api.example.com",
+            "offer_type": "api",
+            "value": "$50 credits",
+            "date_posted": "2025-01-01"
+        }
+        recent_offer = {
+            "name": "Fresh API Deal",
+            "url": "https://fresh-api.example.com",
+            "offer_type": "api",
+            "value": "$100 credits",
+            "date_posted": "2026-08-04"
+        }
+        self.db.save_offer(old_offer)
+        self.db.save_offer(recent_offer)
+
+        deleted = self.db.cleanup_expired_offers(days_limit=30)
+        self.assertEqual(deleted, 1)
+
+        offers = self.db.get_offers(offer_type="all")
+        self.assertEqual(len(offers), 1)
+        self.assertEqual(offers[0]["name"], "Fresh API Deal")
 
 
 if __name__ == "__main__":

@@ -8,12 +8,19 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class DatabaseManager:
     """Handles SQLite operations for Kleros offer caching and storage."""
 
-    def __init__(self, db_path: str = "offers.db"):
+    def __init__(self, db_path: str = "offers.db", auto_cleanup_days: int = 30):
         self.db_path = db_path
         self.init_db()
+        if auto_cleanup_days > 0:
+            self.cleanup_expired_offers(days_limit=auto_cleanup_days)
 
     def get_connection(self) -> sqlite3.Connection:
         """Create and return a database connection with Row factory."""
@@ -48,6 +55,29 @@ class DatabaseManager:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_offers_date ON offers(date_posted);")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_offers_valid ON offers(is_valid);")
             conn.commit()
+
+    def cleanup_expired_offers(self, days_limit: int = 30) -> int:
+        """
+        Delete offers that are older than the specified time limit (in days).
+        Checks date_posted, created_at, and last_seen.
+        Returns count of deleted records.
+        """
+        cutoff_date = (datetime.now(timezone.utc) - timedelta(days=days_limit)).strftime("%Y-%m-%d")
+        cutoff_timestamp = (datetime.now(timezone.utc) - timedelta(days=days_limit)).strftime("%Y-%m-%d %H:%M:%S")
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                DELETE FROM offers
+                WHERE (date_posted IS NOT NULL AND date_posted < ?)
+                   OR (date_posted IS NULL AND created_at < ?)
+                   OR last_seen < ?
+            """, (cutoff_date, cutoff_timestamp, cutoff_timestamp))
+            deleted_count = cursor.rowcount
+            conn.commit()
+            if deleted_count > 0:
+                logger.info(f"Database cleanup removed {deleted_count} offers older than {days_limit} days.")
+            return deleted_count
 
     def is_url_recently_seen(self, url: str, cache_days: int = 7) -> bool:
         """Check if a URL was already processed within the specified cache_days."""
