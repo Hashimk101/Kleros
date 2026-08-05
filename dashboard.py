@@ -302,6 +302,16 @@ st.markdown("""
     .animate-fade-up {
         animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+    /* Checkbox & Chip styling */
+    div[data-testid="stCheckbox"] label span {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 0.8rem !important;
+        color: #8b9bb4 !important;
+    }
+    div[data-testid="stCheckbox"] input:checked + div {
+        background-color: #d4af37 !important;
+        border-color: #d4af37 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -495,12 +505,36 @@ with col_exp:
             use_container_width=True
         )
 
+# Quick Filter Chips
+col_c1, col_c2, col_c3, _ = st.columns([1, 1, 1.2, 1.8])
+with col_c1:
+    chip_global = st.checkbox("🌍 Global Only", key="chip_global_key")
+with col_c2:
+    chip_today = st.checkbox("🆕 Added Today", key="chip_today_key")
+with col_c3:
+    chip_high = st.checkbox("💎 High Value", key="chip_high_key")
+
 # Apply inline text search filtering
 if search_query:
     q = search_query.strip().lower()
     offers = [
         o for o in offers
         if q in (o.get("name") or "").lower() or q in (o.get("description") or "").lower() or q in (o.get("value") or "").lower()
+    ]
+
+# Apply chip filters
+if chip_global:
+    offers = [o for o in offers if "global" in [str(r).lower() for r in o.get("eligible_regions", ["global"])]]
+
+if chip_today:
+    from datetime import datetime, timezone
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    offers = [o for o in offers if o.get("date_posted") == today_str]
+
+if chip_high:
+    offers = [
+        o for o in offers
+        if any(w in (o.get("value") or "").lower() for w in ["$50", "$100", "$200", "$500", "1 year", "pro free", "unlimited", "1m context"])
     ]
 
 # Apply sorting
