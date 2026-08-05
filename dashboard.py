@@ -390,6 +390,19 @@ st.markdown("""
             grid-template-columns: 1fr !important;
         }
     }
+    /* Focus Rings & Accessibility */
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+        outline: 2px solid #d4af37 !important;
+        outline-offset: 2px !important;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        *, ::before, ::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
