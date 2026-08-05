@@ -490,7 +490,30 @@ with col_exp:
         )
 
 if not offers:
-    st.info("No deals recorded for this filter. Click 'Discover Free Deals' above to run autonomous search.")
+    cat_lbl = selected_type if selected_type != "All" else ""
+    reg_lbl = selected_region if selected_region != "All" else ""
+    
+    if cat_lbl and reg_lbl:
+        context_msg = f"No {cat_lbl.lower()} deals found in {reg_lbl}. Try broadening your region filter to 'Global' or category to 'All'."
+    elif cat_lbl:
+        context_msg = f"No {cat_lbl.lower()} deals found in database. Click 'Discover Free Deals' above to run autonomous search."
+    elif reg_lbl:
+        context_msg = f"No deals found for region {reg_lbl}. Try broadening to 'Global' or 'All'."
+    else:
+        context_msg = "No deals recorded yet. Click 'Discover Free Deals' above to run the autonomous pipeline."
+
+    st.markdown(f"""
+    <div style="background: rgba(13, 14, 18, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 3rem 1.5rem; text-align: center; margin-top: 1rem; margin-bottom: 2rem;">
+        <div style="margin-bottom: 1rem;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b9bb4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block;">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+        </div>
+        <div style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 600; color: #fafafa; margin-bottom: 0.4rem;">No deals discovered</div>
+        <div style="color: #8b9bb4; font-size: 0.875rem; max-width: 480px; margin: 0 auto; line-height: 1.5;">{context_msg}</div>
+    </div>
+    """, unsafe_allow_html=True)
 else:
     col_left, col_right = st.columns(2)
     for idx, offer in enumerate(offers):
