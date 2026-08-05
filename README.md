@@ -107,6 +107,7 @@ While Kleros uses multi-layer filtering and LLM verification to detect active fr
 
 - Legacy Documentation: Providers frequently keep deprecated doc pages indexed on search engines even after retiring a free tier or feature.
 - Stale Landing Pages & Blogs: Companies often sunset promotional credit grants without removing the original announcement posts or updating marketing copy.
+- Domain Redirects & Product Mergers: AI platforms occasionally rebrand or get acquired, redirecting older product URLs to new parent product portals (e.g., Windsurf forwarding to Devin Desktop).
 - Mismatched Docs & Terms: API pricing or terms may be updated on portal dashboards while documentation mirrors remain unchanged.
 - Bot-Protected / Auth-Gated Pages: Sites protected by anti-bot screens or requiring user login may serve fallback HTML that lacks updated status details.
 
