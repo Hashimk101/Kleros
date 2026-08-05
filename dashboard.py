@@ -659,9 +659,14 @@ with tab_feed:
                         <div class="deal-title">{offer.get('name')}</div>
                         <div class="deal-value">{offer.get('value') or 'Free Credit / Discount'}</div>
                         <div class="deal-desc">{offer.get('description') or 'No description provided.'}</div>
-                        <a href="{offer.get('url')}" target="_blank" class="claim-link">
-                            Claim Deal &nbsp;&rarr;
-                        </a>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.8rem;">
+                            <a href="{offer.get('url')}" target="_blank" class="claim-link">
+                                Claim Deal &nbsp;&rarr;
+                            </a>
+                            <a href="javascript:void(0)" onclick="navigator.clipboard.writeText('{offer.get('url')}'); this.innerText='Copied!';" class="claim-link" style="background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.08); color: #8b9bb4 !important;">
+                                Copy Link
+                            </a>
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
 
