@@ -752,12 +752,41 @@ with tab_feed:
                         <div class="deal-value">{offer.get('value') or 'Free Credit / Discount'}</div>
                         <div class="deal-desc">{offer.get('description') or 'No description provided.'}</div>
                         <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.8rem;">
-                            <a href="{offer.get('url')}" target="_blank" class="claim-link">
+                            <a href="{url}" target="_blank" class="claim-link">
                                 Claim Deal &nbsp;&rarr;
                             </a>
-                            <a href="javascript:void(0)" onclick="navigator.clipboard.writeText('{offer.get('url')}'); this.innerText='Copied!';" class="claim-link" style="background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.08); color: #8b9bb4 !important;">
+                            <button onclick="
+                                var linkUrl = '{url}';
+                                var btn = this;
+                                function notifyCopied() {
+                                    btn.innerText = 'Copied!';
+                                    setTimeout(function() { btn.innerText = 'Copy Link'; }, 2000);
+                                }
+                                if (navigator.clipboard && window.isSecureContext) {
+                                    navigator.clipboard.writeText(linkUrl).then(notifyCopied).catch(function() { fallback(linkUrl); });
+                                } else {
+                                    fallback(linkUrl);
+                                }
+                                function fallback(text) {
+                                    var ta = document.createElement('textarea');
+                                    ta.value = text;
+                                    ta.style.position = 'fixed';
+                                    ta.style.left = '-9999px';
+                                    ta.style.top = '-9999px';
+                                    document.body.appendChild(ta);
+                                    ta.focus();
+                                    ta.select();
+                                    try {
+                                        document.execCommand('copy');
+                                        notifyCopied();
+                                    } catch (err) {
+                                        console.error('Copy failed', err);
+                                    }
+                                    document.body.removeChild(ta);
+                                }
+                            " class="claim-link" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #e5e7eb !important; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-family: 'Inter', sans-serif;">
                                 Copy Link
-                            </a>
+                            </button>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
