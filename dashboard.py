@@ -271,6 +271,37 @@ st.markdown("""
         color: #6b7280;
         margin-bottom: 0.4rem;
     }
+
+    /* Shimmer Animation for Skeleton Cards */
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    .skeleton-card {
+        background: linear-gradient(90deg, rgba(13, 14, 18, 0.7) 25%, rgba(30, 34, 42, 0.8) 50%, rgba(13, 14, 18, 0.7) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite linear;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        height: 150px;
+    }
+
+    /* Staggered Card Entry Animation */
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .animate-fade-up {
+        animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -434,7 +465,7 @@ else:
             geo_lbl = "US-ONLY" if is_us else ", ".join(regions).upper()
 
             st.markdown(f"""
-            <div class="deal-card">
+            <div class="deal-card animate-fade-up" style="animation-delay: {idx * 0.05}s;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <span class="tag-mono {badge_cls}">{off_type.upper()}</span>
