@@ -349,6 +349,19 @@ st.markdown("""
         color: #ffffff !important;
         font-weight: 600 !important;
     }
+    /* Discovery Mode Animations */
+    @keyframes brandPulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.75; text-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    .brand-pulse {
+        animation: brandPulse 2s infinite ease-in-out;
+    }
+    .discovery-dimmed {
+        opacity: 0.45;
+        transition: opacity 0.3s ease;
+    }
 </style>
 """, unsafe_allow_html=True)
 
