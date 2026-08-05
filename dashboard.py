@@ -259,6 +259,15 @@ st.markdown("""
         box-shadow: 0 0 20px rgba(212,175,55,0.05); /* Faint amber glow */
         margin-bottom: 1.5rem;
     }
+    .section-header {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6b7280;
+        margin-bottom: 0.4rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -301,11 +310,11 @@ st.markdown("""
 col_action, col_type_filter, col_reg_filter = st.columns([1.5, 1, 1])
 
 with col_action:
-    st.markdown("<div style='font-size: 0.75rem; font-weight: 600; color: #6f747c; text-transform: uppercase; margin-bottom: 0.4rem;'>Discovery Trigger</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-header'>Discovery Trigger</div>", unsafe_allow_html=True)
     trigger_discovery = st.button("Discover Free Deals", use_container_width=True)
 
 with col_type_filter:
-    st.markdown("<div style='font-size: 0.75rem; font-weight: 600; color: #6f747c; text-transform: uppercase; margin-bottom: 0.4rem;'>Filter Category</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-header'>Filter Category</div>", unsafe_allow_html=True)
     selected_type = st.selectbox(
         "Filter Category",
         ["All", "API", "IDE", "Chat", "Student"],
@@ -313,7 +322,7 @@ with col_type_filter:
     )
 
 with col_reg_filter:
-    st.markdown("<div style='font-size: 0.75rem; font-weight: 600; color: #6f747c; text-transform: uppercase; margin-bottom: 0.4rem;'>Filter Region</div>", unsafe_allow_html=True)
+    st.markdown("<div class='section-header'>Filter Region</div>", unsafe_allow_html=True)
     selected_region = st.selectbox(
         "Filter Region",
         ["All", "Global", "US", "Europe", "Asia"],
