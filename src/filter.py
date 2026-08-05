@@ -46,15 +46,16 @@ class FilterEngine:
         if not offer_type or not isinstance(offer_type, str) or offer_type.lower() not in VALID_OFFER_TYPES:
             return False
 
-        # 4. Strict Free Filter (Reject paid/cheap deals)
-        import re
-        value_desc = f"{offer.get('value', '')} {offer.get('description', '')}".lower()
-        
-        # Look for explicit pricing (e.g. $0.14, $1.50) or paid keywords
-        paid_pattern = r"(\$[0-9]+\.[0-9]+)|(pay-as-you-go)|(cents per)|(price per)|(billed)"
-        if re.search(paid_pattern, value_desc):
-            logger.info(f"Filter Engine rejected PAID deal: {name}")
-            return False
+        # 4. Strict Free Filter (Reject paid/cheap deals) - Only apply to API and Chat
+        if offer_type.lower() in ("api", "chat"):
+            import re
+            value_desc = f"{offer.get('value', '')} {offer.get('description', '')}".lower()
+            
+            # Look for explicit pricing (e.g. $0.14, $1.50) or paid keywords
+            paid_pattern = r"(\$[0-9]+\.[0-9]+)|(pay-as-you-go)|(cents per)|(price per)|(billed)"
+            if re.search(paid_pattern, value_desc):
+                logger.info(f"Filter Engine rejected PAID deal: {name}")
+                return False
 
         return True
 

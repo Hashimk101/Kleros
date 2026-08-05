@@ -92,13 +92,17 @@ class KlerosAgent:
             results_api = self.search_router.search(query=query_api, max_results=max_results)
             results_ide = self.search_router.search(query=query_ide, max_results=max_results)
             
-            # Combine and deduplicate
+            # Combine and deduplicate by interleaving to ensure a mix in top N
             seen_urls = set()
-            for res in results_api + results_ide:
-                url = res.get("url")
-                if url and url not in seen_urls:
-                    seen_urls.add(url)
-                    search_results.append(res)
+            from itertools import zip_longest
+            
+            for res_api, res_ide in zip_longest(results_api, results_ide):
+                for res in (res_api, res_ide):
+                    if res:
+                        url = res.get("url")
+                        if url and url not in seen_urls:
+                            seen_urls.add(url)
+                            search_results.append(res)
         else:
             notify("Search", f"Autonomous search running for query: '{query}'", 0.1)
             search_results = self.search_router.search(query=query, max_results=max_results)
