@@ -72,6 +72,8 @@ Cards also display a geographic availability tag:
 
 ### Live Pipeline Status and Control
 
+![Live Pipeline Status](assets/live_pipeline_status.png)
+
 When triggering "Discover Free Deals", the UI displays real-time operational feedback:
 
 - Progress Bar: Visual status bar reflecting step progress from 0% to 100%.
@@ -90,6 +92,8 @@ When triggering "Discover Free Deals", the UI displays real-time operational fee
   - High Value: Shows deals that offer particularly high credit amounts or long subscription durations.
 
 ## Automated Scheduled Collection (GitHub Actions)
+
+![GitHub Actions Data Collector](assets/github_actions_collector.png)
 
 Kleros supports automated, hands-free background collection via GitHub Actions workflows (`collector.yml`):
 
