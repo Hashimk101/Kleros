@@ -63,6 +63,17 @@ class TestFilterEngine(unittest.TestCase):
         self.assertEqual(len(filtered), 1)
         self.assertEqual(filtered[0]["source_url"], "https://codeium.com/windsurf")
 
+    def test_calculate_confidence_score(self):
+        official_offer = {
+            "name": "Google AI Studio",
+            "url": "https://aistudio.google.com",
+            "value": "15 RPM free tier quota",
+            "is_valid": True
+        }
+        score = self.filter_engine.calculate_confidence_score(official_offer)
+        self.assertGreaterEqual(score, 80)
+        self.assertLessEqual(score, 100)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -766,6 +766,18 @@ with tab_feed:
                     is_verified = any(k in url.lower() for k in ["google", "openai", "nvidia", "zed.dev", "anthropic", "github", "mistral", "groq", "cloudflare", "cohere", "sambanova", "siliconflow", "vercel", "kilo.ai"])
                     verify_badge = '<span class="tag-mono" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3);">✓ OFFICIAL</span>' if is_verified else '<span class="tag-mono" style="background: rgba(255, 255, 255, 0.05); color: #8b9bb4; border: 1px solid rgba(255, 255, 255, 0.1);">~ SOURCE</span>'
 
+                    # Confidence Score Badge
+                    conf_score = offer.get("confidence_score")
+                    if conf_score is None:
+                        conf_score = 95 if is_verified else 80
+                    
+                    if conf_score >= 90:
+                        conf_badge = f'<span class="tag-mono" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">{conf_score}% CONFIDENCE</span>'
+                    elif conf_score >= 70:
+                        conf_badge = f'<span class="tag-mono" style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3);">{conf_score}% CONFIDENCE</span>'
+                    else:
+                        conf_badge = f'<span class="tag-mono" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">{conf_score}% CONFIDENCE</span>'
+
                     st.markdown(f"""
                     <div class="deal-card animate-fade-up" style="animation-delay: {idx * 0.05}s;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -773,6 +785,7 @@ with tab_feed:
                                 <span class="tag-mono {badge_cls}">{off_type.upper()}</span>
                                 <span class="tag-mono {geo_cls}">{geo_lbl}</span>
                                 {verify_badge}
+                                {conf_badge}
                             </div>
                             <span style="color: #8b9bb4; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;">{fresh_dot} {date_posted or 'VERIFIED'}</span>
                         </div>
