@@ -51,6 +51,18 @@ class TestFilterEngine(unittest.TestCase):
         self.assertEqual(len(filtered), 1)
         self.assertEqual(filtered[0]["name"], "Gemini API Free Tier")
 
+    def test_source_url_preservation(self):
+        raw_offers = [{
+            "name": "Windsurf IDE",
+            "url": "https://devin.ai/desktop",
+            "source_url": "https://codeium.com/windsurf",
+            "offer_type": "ide",
+            "eligible_regions": ["global"]
+        }]
+        filtered = self.filter_engine.filter_offers(raw_offers)
+        self.assertEqual(len(filtered), 1)
+        self.assertEqual(filtered[0]["source_url"], "https://codeium.com/windsurf")
+
 
 if __name__ == "__main__":
     unittest.main()
