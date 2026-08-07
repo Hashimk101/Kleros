@@ -161,6 +161,8 @@ Launch the Streamlit dashboard with:
 
 The dashboard will open at http://localhost:8501. From the interface you can trigger the discovery pipeline, filter and search the deal database, and export verified deals as a CSV file.
 
+Note: Executing a full discovery pipeline run easily takes **more than 5 minutes** (typically 5 to 15 minutes) as the agent performs dual search queries, fetches clean page content via Jina Reader, resolves canonical HTTP redirects, and extracts structured schemas using LLMs. You can track real-time progress or click "Cancel Pipeline" at any time.
+
 ## Running Unit Tests
 
 The project includes a unit test suite covering the pipeline components including database storage, search routing, content fetching, and filter logic.
