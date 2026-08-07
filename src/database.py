@@ -46,10 +46,17 @@ class DatabaseManager:
                     source_type TEXT,
                     source_url TEXT,
                     is_valid BOOLEAN DEFAULT 1,
+                    confidence_score INTEGER DEFAULT 90,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+
+            # Migration check for confidence_score
+            try:
+                cursor.execute("ALTER TABLE offers ADD COLUMN confidence_score INTEGER DEFAULT 90;")
+            except Exception:
+                pass
 
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_offers_type ON offers(offer_type);")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_offers_date ON offers(date_posted);")
@@ -102,6 +109,8 @@ class DatabaseManager:
         elif not eligible_regions_str:
             eligible_regions_str = json.dumps(["global"])
 
+        confidence_score = offer.get("confidence_score", 90)
+
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT id FROM offers WHERE url = ?", (offer["url"],))
@@ -120,6 +129,7 @@ class DatabaseManager:
                         source_type = ?,
                         source_url = ?,
                         is_valid = ?,
+                        confidence_score = ?,
                         last_seen = ?
                     WHERE url = ?
                 """, (
@@ -133,6 +143,7 @@ class DatabaseManager:
                     offer.get("source_type", "blog"),
                     offer.get("source_url", offer["url"]),
                     1 if offer.get("is_valid", True) else 0,
+                    confidence_score,
                     now,
                     offer["url"]
                 ))
@@ -143,8 +154,8 @@ class DatabaseManager:
                     INSERT INTO offers (
                         name, url, offer_type, value, description,
                         geo_restricted, eligible_regions, date_posted,
-                        source_type, source_url, is_valid, created_at, last_seen
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        source_type, source_url, is_valid, confidence_score, created_at, last_seen
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     offer.get("name", "Unknown Offer"),
                     offer["url"],
@@ -157,6 +168,7 @@ class DatabaseManager:
                     offer.get("source_type", "blog"),
                     offer.get("source_url", offer["url"]),
                     1 if offer.get("is_valid", True) else 0,
+                    confidence_score,
                     now,
                     now
                 ))

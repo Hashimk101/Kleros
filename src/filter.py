@@ -149,6 +149,54 @@ class FilterEngine:
         logger.info(f"Pre-fetch filter retained {len(fresh_results)}/{len(search_results)} fresh search results.")
         return fresh_results
 
+    def calculate_confidence_score(self, offer: Dict[str, Any]) -> int:
+        """
+        Calculate a composite Health/Confidence score (0 - 100%) for an offer:
+        - Domain Trust (+35% for official first-party domains, +20% for third-party)
+        - Schema & LLM Validated (+30%)
+        - Value Detail Explicit (+15% if specific limits mentioned)
+        - Recency (+20% for <7 days old, +10% for <30 days old)
+        """
+        score = 0
+        url = (offer.get("url") or "").lower()
+
+        # 1. Official domain check (+35% or +20%)
+        official_domains = ["google", "openai", "nvidia", "zed.dev", "anthropic", "github", "mistral", "groq", "cloudflare", "cohere", "sambanova", "siliconflow", "vercel", "kilo.ai", "together.ai", "cerebras", "baseten"]
+        if any(d in url for d in official_domains):
+            score += 35
+        else:
+            score += 20
+
+        # 2. LLM Validated & Active Schema (+30%)
+        if offer.get("is_valid", True):
+            score += 30
+
+        # 3. Value Detail Specificity (+15%)
+        val = (offer.get("value") or "").strip()
+        if len(val) > 5 and val.lower() != "free credit / discount":
+            score += 15
+        else:
+            score += 5
+
+        # 4. Recency Window (+20% or +10%)
+        date_posted = offer.get("date_posted")
+        if date_posted:
+            try:
+                posted_dt = datetime.strptime(date_posted.strip(), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                days_old = (datetime.now(timezone.utc) - posted_dt).days
+                if days_old <= 7:
+                    score += 20
+                elif days_old <= 30:
+                    score += 10
+                else:
+                    score += 5
+            except Exception:
+                score += 15
+        else:
+            score += 15
+
+        return min(100, max(0, score))
+
     def filter_offers(self, raw_offers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Filter and normalize raw extracted offers:
@@ -186,6 +234,7 @@ class FilterEngine:
             seen_urls.add(url)
 
             processed["is_valid"] = True
+            processed["confidence_score"] = self.calculate_confidence_score(processed)
             filtered.append(processed)
 
         logger.info(f"Filter Engine passed {len(filtered)} / {len(raw_offers)} valid offers.")
