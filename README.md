@@ -54,6 +54,14 @@ A badge on the card indicates the trustworthiness of the source URL:
 - OFFICIAL: The deal URL belongs to a first-party domain of a known AI provider (e.g., openai.com, anthropic.com, google.com, github.com, nvidia.com, zed.dev, groq.com, mistral.ai, cloudflare.com). These deals come directly from the provider and are considered highly reliable.
 - SOURCE: The deal was found on an aggregator, blog, documentation mirror, or other third-party site. The deal may be legitimate but should be verified at the provider's own site before relying on it.
 
+#### Confidence Badge
+
+A score badge (e.g., `95% CONFIDENCE`, `80% CONFIDENCE`) indicates the calculated Health Confidence level based on a composite multi-factor scoring engine:
+
+- Green Badge (90% - 100% Confidence): High-trust offer from an official first-party domain, fully validated by LLMs with explicit free-tier quota details and fresh confirmation.
+- Yellow Badge (70% - 89% Confidence): Valid offer from a third-party aggregator or with generalized pricing details; worth verifying terms.
+- Red Badge (Below 70% Confidence): Lower-detail or unverified offer; treat with caution.
+
 #### Category Tags
 
 Each card carries a type tag identifying the category of the deal:
