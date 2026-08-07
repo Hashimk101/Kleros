@@ -175,6 +175,10 @@ class FilterEngine:
             # Geo processing
             processed = self.process_geo_flags(offer)
 
+            # Preserve source_url
+            if not processed.get("source_url"):
+                processed["source_url"] = processed["url"]
+
             # Deduplication check
             url = processed["url"].strip().rstrip("/")
             if url in seen_urls:

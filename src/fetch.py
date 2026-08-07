@@ -34,6 +34,37 @@ class ContentFetcher:
         self.timeout = timeout
         self.fetch_delay = fetch_delay
 
+    async def resolve_canonical_url_async(self, client: httpx.AsyncClient, target_url: str) -> str:
+        """Follow HTTP 301/302 redirects and return the final canonical destination URL."""
+        if not target_url or not isinstance(target_url, str):
+            return target_url
+        try:
+            resp = await client.head(target_url, headers=DIRECT_HEADERS, timeout=5.0, follow_redirects=True)
+            return str(resp.url)
+        except Exception:
+            try:
+                resp = await client.get(target_url, headers=DIRECT_HEADERS, timeout=5.0, follow_redirects=True)
+                return str(resp.url)
+            except Exception as e:
+                logger.warning(f"Could not resolve canonical URL for {target_url}: {e}")
+                return target_url
+
+    def resolve_canonical_url(self, target_url: str) -> str:
+        """Synchronous wrapper for resolve_canonical_url_async."""
+        if not target_url or not isinstance(target_url, str):
+            return target_url
+        try:
+            with httpx.Client(headers=DIRECT_HEADERS, timeout=5.0, follow_redirects=True) as client:
+                resp = client.head(target_url)
+                return str(resp.url)
+        except Exception:
+            try:
+                with httpx.Client(headers=DIRECT_HEADERS, timeout=5.0, follow_redirects=True) as client:
+                    resp = client.get(target_url)
+                    return str(resp.url)
+            except Exception:
+                return target_url
+
     async def fetch_via_jina(self, client: httpx.AsyncClient, target_url: str) -> Optional[str]:
         """Fetch clean Markdown via Jina Reader."""
         jina_url = f"{self.jina_prefix.rstrip('/')}/{target_url}"
